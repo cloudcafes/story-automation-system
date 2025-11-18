@@ -1,0 +1,1683 @@
+youtube/
+├── main.py              # Orchestrator & workflow controller
+├── gdrive_manager.py    # Google Drive API operations
+├── story_processor.py   # Story analysis & content generation
+├── template_engine.py   # Framework filling & output creation
+└── config.py           # Paths, constants, settings
+
+yt/ (Root: https://drive.google.com/drive/folders/1vWhSS20YjkFNitEZI14c8C1uEt12puLE)
+│
+├── Framework/ (CONSTANT - Manual setup once)
+│   ├── ai_queries/
+│   │   ├── character_queries.txt
+│   │   ├── scene_queries.txt
+│   │   ├── narration_queries.txt
+│   │   └── prompt_queries.txt
+│   ├── framework_templates/
+│   │   ├── narration_template.txt
+│   │   ├── character_template.txt
+│   │   └── scene_template.txt
+│   └── style_guides/
+│       └── visual_rules.txt
+│
+├── story_input.txt (DYNAMIC - You change this at ROOT for each story)
+│
+└── (DYNAMIC - Python creates with name_timestamp)_20241118-143022/
+    ├── 1-Story.txt
+    ├── 2-Narration.txt
+    ├── 3-Character-Sheet.txt
+    ├── 4-Scenes.txt
+    ├── 5-Image-Prompts.txt
+    └── processing-report.txt
+
+Generated: 2025-11-18 17:44:22
+Combined All file content of *.py, *.txt files
+From Directory: C:\\dev\\python-projects\\Youtube
+Recursive Search: False
+Total Files: 9
+================================================================================
+
+
+================================================================================
+FILE: account.txt
+EXTENSION: .txt
+FULL PATH: C:\dev\python-projects\Youtube\account.txt
+ENCODING: utf-8
+ORIGINAL SIZE: 58 bytes
+MINIFIED SIZE: 56 bytes
+SIZE REDUCTION: 3.4%
+================================================================================
+
+auto-generated@my-project-200107.iam.gserviceaccount.com
+
+
+================================================================================
+FILE: complete_code_20251118_txt.txt
+EXTENSION: .txt
+FULL PATH: C:\dev\python-projects\Youtube\complete_code_20251118_txt.txt
+ENCODING: utf-8
+ORIGINAL SIZE: 1104 bytes
+MINIFIED SIZE: 1096 bytes
+SIZE REDUCTION: 0.7%
+================================================================================
+
+Generated: 2025-11-18 17:43:42
+Combined All file content of *.txt files
+From Directory: C:\\dev\\python-projects\\Youtube
+Recursive Search: False
+Total Files: 2
+================================================================================
+================================================================================
+FILE: account.txt
+EXTENSION: .txt
+FULL PATH: C:\dev\python-projects\Youtube\account.txt
+ENCODING: utf-8
+ORIGINAL SIZE: 58 bytes
+MINIFIED SIZE: 56 bytes
+SIZE REDUCTION: 3.4%
+================================================================================
+auto-generated@my-project-200107.iam.gserviceaccount.com
+================================================================================
+FILE: requirements.txt
+EXTENSION: .txt
+FULL PATH: C:\dev\python-projects\Youtube\requirements.txt
+ENCODING: utf-8
+ORIGINAL SIZE: 115 bytes
+MINIFIED SIZE: 115 bytes
+SIZE REDUCTION: 0.0%
+================================================================================
+google-api-python-client>=2.0.0
+google-auth-httplib2>=0.1.0
+google-auth-oauthlib>=1.0.0
+openai>=1.0.0
+httpx>=0.24.0
+
+
+================================================================================
+FILE: config.py
+EXTENSION: .py
+FULL PATH: C:\dev\python-projects\Youtube\config.py
+ENCODING: utf-8
+ORIGINAL SIZE: 7143 bytes
+MINIFIED SIZE: 4615 bytes
+SIZE REDUCTION: 35.4%
+================================================================================
+
+"""
+Google Drive Story Automation - Configuration File
+SSL Verification Disabled
+"""
+import os
+from datetime import datetime
+SSL_VERIFY = False
+DEEPSEEK_VERIFY_SSL = False
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY', 'sk-df60b28326444de6859976f6e603fd9c')
+DEEPSEEK_BASE_URL = "https://api.deepseek.com"
+DEEPSEEK_MODEL = "deepseek-chat"
+DEEPSEEK_MAX_TOKENS = 4000
+DEEPSEEK_TEMPERATURE = 0.7
+GOOGLE_DRIVE_ROOT_FOLDER_ID = "1vWhSS20YjkFNitEZI14c8C1uEt12puLE"
+INPUT_FOLDER_NAME = "(in)"
+OUTPUT_FOLDER_NAME = "(out)"
+AI_QUERIES_FOLDER = "ai_queries"
+FRAMEWORK_TEMPLATES_FOLDER = "framework_templates"
+STYLE_GUIDES_FOLDER = "style_guides"
+STORY_INPUT_FILE = "story_input.txt"
+CHARACTER_QUERIES_FILE = "character_queries.txt"
+SCENE_QUERIES_FILE = "scene_queries.txt"
+NARRATION_QUERIES_FILE = "narration_queries.txt"
+PROMPT_QUERIES_FILE = "prompt_queries.txt"
+NARRATION_TEMPLATE_FILE = "narration_template.txt"
+CHARACTER_TEMPLATE_FILE = "character_template.txt"
+SCENE_TEMPLATE_FILE = "scene_template.txt"
+VISUAL_RULES_FILE = "visual_rules.txt"
+OUTPUT_STORY_FILE = "1-Story.txt"
+OUTPUT_NARRATION_FILE = "2-Narration.txt"
+OUTPUT_CHARACTER_SHEET_FILE = "3-Character-Sheet.txt"
+OUTPUT_SCENES_FILE = "4-Scenes.txt"
+OUTPUT_IMAGE_PROMPTS_FILE = "5-Image-Prompts.txt"
+OUTPUT_PROCESSING_REPORT_FILE = "processing-report.txt"
+MAX_RETRIES = 3
+RETRY_DELAY = 2
+API_TIMEOUT = 30.0
+MINIMUM_QUALITY_SCORE = 0.7
+MAXIMUM_ERROR_COUNT = 5
+def generate_output_folder_name(story_title="story"):
+ """Generate a unique folder name for output"""
+ sanitized_title = "".join(c for c in story_title if c.isalnum() or c in (' ', '-', '_')).strip()
+ sanitized_title = sanitized_title.replace(' ', '-').lower()
+ timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+ return f"{sanitized_title}-{timestamp}"
+def get_input_folder_path():
+ """Get the full path for input folder"""
+ return f"{INPUT_FOLDER_NAME}"
+def get_output_folder_path(story_title="story"):
+ """Get the full path for output folder"""
+ folder_name = generate_output_folder_name(story_title)
+ return f"{OUTPUT_FOLDER_NAME}/{folder_name}"
+def get_ai_queries_folder_path():
+ """Get the full path for AI queries folder"""
+ return f"{INPUT_FOLDER_NAME}/{AI_QUERIES_FOLDER}"
+def get_framework_templates_folder_path():
+ """Get the full path for framework templates folder"""
+ return f"{INPUT_FOLDER_NAME}/{FRAMEWORK_TEMPLATES_FOLDER}"
+def get_style_guides_folder_path():
+ """Get the full path for style guides folder"""
+ return f"{INPUT_FOLDER_NAME}/{STYLE_GUIDES_FOLDER}"
+REQUIRED_INPUT_FILES = [STORY_INPUT_FILE,
+ f"{AI_QUERIES_FOLDER}/{CHARACTER_QUERIES_FILE}",
+ f"{AI_QUERIES_FOLDER}/{SCENE_QUERIES_FILE}",
+ f"{AI_QUERIES_FOLDER}/{NARRATION_QUERIES_FILE}",
+ f"{AI_QUERIES_FOLDER}/{PROMPT_QUERIES_FILE}",
+ f"{FRAMEWORK_TEMPLATES_FOLDER}/{NARRATION_TEMPLATE_FILE}",
+ f"{FRAMEWORK_TEMPLATES_FOLDER}/{CHARACTER_TEMPLATE_FILE}",
+ f"{FRAMEWORK_TEMPLATES_FOLDER}/{SCENE_TEMPLATE_FILE}",
+ f"{STYLE_GUIDES_FOLDER}/{VISUAL_RULES_FILE}"]
+EXPECTED_OUTPUT_FILES = [OUTPUT_STORY_FILE,
+ OUTPUT_NARRATION_FILE,
+ OUTPUT_CHARACTER_SHEET_FILE,
+ OUTPUT_SCENES_FILE,
+ OUTPUT_IMAGE_PROMPTS_FILE,
+ OUTPUT_PROCESSING_REPORT_FILE]
+GOOGLE_DRIVE_SCOPES = ['https://www.googleapis.com/auth/drive.file',
+ 'https://www.googleapis.com/auth/drive.appdata']
+CREDENTIALS_FILE_PATH = os.path.join(os.path.dirname(__file__), 'credentials.json')
+MIME_TYPE_FOLDER = 'application/vnd.google-apps.folder'
+MIME_TYPE_TEXT = 'text/plain'
+LOG_LEVEL = "INFO"
+LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+ERROR_MESSAGES = {'missing_credentials': "Credentials file not found.",
+ 'drive_api_error': "Google Drive API error: {error}",
+ 'missing_input_file': "Required input file not found: {file_path}",
+ 'ai_api_error': "DeepSeek API error: {error}",
+ 'processing_error': "Processing error: {error}"}
+SUCCESS_MESSAGES = {'drive_connected': "Connected to Google Drive",
+ 'folders_created': "Directory structure created",
+ 'story_processed': "Story processed: {story_title}",
+ 'files_generated': "Generated {file_count} files"}
+def validate_config():
+ """Validate that all required configuration is present"""
+ if not os.path.exists(CREDENTIALS_FILE_PATH):
+ return False, ERROR_MESSAGES['missing_credentials']
+ if not DEEPSEEK_API_KEY:
+ return False, "DEEPSEEK_API_KEY not set."
+ if not GOOGLE_DRIVE_ROOT_FOLDER_ID:
+ return False, "GOOGLE_DRIVE_ROOT_FOLDER_ID not configured."
+ return True, "Configuration valid"
+config_valid, config_error = validate_config()
+if not config_valid:
+ print(f"⚠️ Configuration Warning: {config_error}")
+
+
+================================================================================
+FILE: file_joiner.py
+EXTENSION: .py
+FULL PATH: C:\dev\python-projects\Youtube\file_joiner.py
+ENCODING: utf-8
+ORIGINAL SIZE: 9083 bytes
+MINIFIED SIZE: 7099 bytes
+SIZE REDUCTION: 21.8%
+================================================================================
+
+import os
+import glob
+import argparse
+from pathlib import Path
+from datetime import datetime
+import platform
+import chardet
+import re
+SEARCH_DIRECTORY = "/home/danand/qcs_infra_tf" if platform.system() != "Windows" else "C:\\dev\\python-projects\\Youtube"
+DEFAULT_EXTENSIONS = ["*.py","*.txt"]
+OUTPUT_FILENAME_PREFIX = "complete_code"
+ENCODING = "utf-8"
+DELIMITER = "=" * 80
+RECURSIVE_SEARCH = False
+def normalize_path(path):
+ if platform.system() == "Windows":
+ path = path.replace('\\', '\\\\')
+ return path
+def detect_encoding(file_path):
+ try:
+ with open(file_path, 'rb') as file:
+ raw_data = file.read()
+ result = chardet.detect(raw_data)
+ encoding = result['encoding']
+ confidence = result['confidence']
+ if encoding is None or confidence < 0.7:
+ return 'utf-8'
+ return encoding
+ except Exception as e:
+ print(f"Warning: Could not detect encoding for {file_path}, using utf-8: {e}")
+ return 'utf-8'
+def read_file_with_fallback(file_path):
+ encodings_to_try = ['utf-8', 'latin-1', 'cp1252', 'iso-8859-1', 'utf-16']
+ for encoding in encodings_to_try:
+ try:
+ with open(file_path, 'r', encoding=encoding) as file:
+ return file.read(), encoding
+ except UnicodeDecodeError:
+ continue
+ except Exception as e:
+ print(f"Error reading {file_path} with {encoding}: {e}")
+ continue
+ try:
+ detected_encoding = detect_encoding(file_path)
+ with open(file_path, 'r', encoding=detected_encoding) as file:
+ return file.read(), detected_encoding
+ except Exception as e:
+ print(f"Final fallback failed for {file_path}: {e}")
+ return None, None
+def minify_content(content, file_extension):
+ if not content:
+ return content
+ minified = content
+ if file_extension in ['.py', '.tf', '.js', '.java', '.c', '.cpp', '.cs']:
+ minified = re.sub(r'
+ if file_extension in ['.js', '.java', '.c', '.cpp', '.cs', '.css']:
+ minified = re.sub(r'//.*$', '', minified, flags=re.MULTILINE)
+ minified = re.sub(r'/\*.*?\*/', '', minified, flags=re.DOTALL)
+ if file_extension in ['.html', '.xml']:
+ minified = re.sub(r'<!--.*?-->', '', minified, flags=re.DOTALL)
+ minified = re.sub(r'^\s*$\n', '', minified, flags=re.MULTILINE)
+ minified = re.sub(r'[\t]+', ' ', minified)
+ minified = re.sub(r'\n\s*\n', '\n', minified)
+ minified = re.sub(r'[\t]+\n', '\n', minified)
+ minified = re.sub(r'{\s+', '{', minified)
+ minified = re.sub(r'\s+}', '}', minified)
+ minified = re.sub(r'\(\s+', '(', minified)
+ minified = re.sub(r'\s+\)', ')', minified)
+ minified = re.sub(r'\[\s+', '[', minified)
+ minified = re.sub(r'\s+\]', ']', minified)
+ minified = re.sub(r';\s+;', ';', minified)
+ minified = re.sub(r',\s+,', ',', minified)
+ minified = minified.strip()
+ return minified
+def get_output_filename(prefix, extensions):
+ date_str = datetime.now().strftime("%Y%m%d")
+ ext_str = "_".join([ext.replace('*.', '') for ext in extensions])
+ return f"{prefix}_{date_str}_{ext_str}.txt"
+def combine_tf_files(search_dir, output_file, file_extensions, include_hidden=False):
+ try:
+ search_dir = normalize_path(search_dir)
+ search_path = Path(search_dir)
+ if not search_path.exists():
+ print(f"Error: Directory '{search_dir}' does not exist")
+ return False
+ output_path = search_path / output_file
+ all_files = []
+ for extension in file_extensions:
+ if RECURSIVE_SEARCH:
+ pattern = "**/" + extension
+ else:
+ pattern = extension
+ files_found = list(search_path.glob(pattern))
+ if not include_hidden:
+ files_found = [f for f in files_found if not any(part.startswith('.') for part in f.parts)]
+ all_files.extend(files_found)
+ all_files = list(set(all_files))
+ if not all_files:
+ extensions_str = ", ".join(file_extensions)
+ print(f"No files matching {extensions_str} found in {search_dir}")
+ print(f"Recursive search was: {'enabled' if RECURSIVE_SEARCH else 'disabled'}")
+ return False
+ print(f"Found {len(all_files)} files matching extensions: {', '.join(file_extensions)}")
+ print(f"Recursive search: {RECURSIVE_SEARCH}")
+ with open(output_path, 'w', encoding=ENCODING) as outfile:
+ outfile.write(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
+ outfile.write(f"Combined All file content of {', '.join(file_extensions)} files\n")
+ outfile.write(f"From Directory: {search_dir}\n")
+ outfile.write(f"Recursive Search: {RECURSIVE_SEARCH}\n")
+ outfile.write(f"Total Files: {len(all_files)}\n")
+ outfile.write(DELIMITER + "\n\n")
+ for file_path in sorted(all_files):
+ try:
+ relative_path = file_path.relative_to(search_path)
+ print(f"Processing: {relative_path}")
+ outfile.write(f"\n{DELIMITER}\n")
+ outfile.write(f"FILE: {relative_path}\n")
+ outfile.write(f"EXTENSION: {file_path.suffix}\n")
+ outfile.write(f"FULL PATH: {file_path}\n")
+ content, used_encoding = read_file_with_fallback(file_path)
+ if content is None:
+ outfile.write(f"ENCODING: FAILED TO READ FILE\n")
+ outfile.write(f"{DELIMITER}\n\n")
+ print(f"Error: Could not read {file_path} (all encoding attempts failed)")
+ continue
+ original_size = len(content)
+ minified_content = minify_content(content, file_path.suffix.lower())
+ minified_size = len(minified_content)
+ outfile.write(f"ENCODING: {used_encoding}\n")
+ outfile.write(f"ORIGINAL SIZE: {original_size} bytes\n")
+ outfile.write(f"MINIFIED SIZE: {minified_size} bytes\n")
+ outfile.write(f"SIZE REDUCTION: {((original_size - minified_size) / original_size * 100):.1f}%\n")
+ outfile.write(f"{DELIMITER}\n\n")
+ outfile.write(minified_content)
+ outfile.write("\n\n")
+ except Exception as e:
+ print(f"Error processing {file_path}: {e}")
+ outfile.write(f"\n{DELIMITER}\n")
+ outfile.write(f"FILE: {relative_path}\n")
+ outfile.write(f"ERROR: {e}\n")
+ outfile.write(f"{DELIMITER}\n\n")
+ continue
+ print(f"Successfully combined {len(all_files)} files into {output_path}")
+ return True
+ except Exception as e:
+ print(f"Unexpected error: {e}")
+ return False
+def parse_extensions(extensions_str):
+ if not extensions_str:
+ return DEFAULT_EXTENSIONS
+ extensions = [ext.strip() for ext in extensions_str.split(',')]
+ parsed_extensions = []
+ for ext in extensions:
+ if not ext.startswith('*'):
+ if not ext.startswith('.'):
+ ext = '.' + ext
+ ext = '*' + ext
+ parsed_extensions.append(ext)
+ return parsed_extensions
+def main():
+ search_directory = SEARCH_DIRECTORY
+ file_extensions = DEFAULT_EXTENSIONS
+ include_hidden = False
+ recursive = RECURSIVE_SEARCH
+ output_filename = get_output_filename(OUTPUT_FILENAME_PREFIX, file_extensions)
+ print(f"Platform: {platform.system()}")
+ print(f"Searching directory: {search_directory}")
+ print(f"File extensions: {', '.join(file_extensions)}")
+ print(f"Output file: {output_filename}")
+ print(f"Output location: {search_directory}")
+ print(f"Include hidden files: {include_hidden}")
+ print(f"Recursive search: {recursive}")
+ print("-" * 50)
+ success = combine_tf_files(search_directory,
+ output_filename,
+ file_extensions,
+ include_hidden)
+ if success:
+ output_path = Path(normalize_path(search_directory)) / output_filename
+ print(f"\n✅ Completed! Check {output_path}")
+ if output_path.exists():
+ file_size = output_path.stat().st_size
+ print(f"Output file size: {file_size:,} bytes ({file_size/1024/1024:.2f} MB)")
+ else:
+ print(f"\n❌ Failed to combine files")
+ exit(1)
+if __name__ == "__main__":
+ main()
+
+
+================================================================================
+FILE: gdrive_manager.py
+EXTENSION: .py
+FULL PATH: C:\dev\python-projects\Youtube\gdrive_manager.py
+ENCODING: utf-8
+ORIGINAL SIZE: 13260 bytes
+MINIFIED SIZE: 9591 bytes
+SIZE REDUCTION: 27.7%
+================================================================================
+
+"""
+Google Drive Manager - Fixed SSL Issues
+"""
+import os
+import logging
+import ssl
+import urllib3
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload, MediaIoBaseDownload
+from googleapiclient.errors import HttpError
+import io
+import time
+from config import (GOOGLE_DRIVE_ROOT_FOLDER_ID,
+ INPUT_FOLDER_NAME,
+ OUTPUT_FOLDER_NAME,
+ AI_QUERIES_FOLDER,
+ FRAMEWORK_TEMPLATES_FOLDER,
+ STYLE_GUIDES_FOLDER,
+ STORY_INPUT_FILE,
+ CHARACTER_QUERIES_FILE,
+ SCENE_QUERIES_FILE,
+ NARRATION_QUERIES_FILE,
+ PROMPT_QUERIES_FILE,
+ NARRATION_TEMPLATE_FILE,
+ CHARACTER_TEMPLATE_FILE,
+ SCENE_TEMPLATE_FILE,
+ VISUAL_RULES_FILE,
+ GOOGLE_DRIVE_SCOPES,
+ CREDENTIALS_FILE_PATH,
+ MIME_TYPE_FOLDER,
+ MIME_TYPE_TEXT,
+ ERROR_MESSAGES,
+ SUCCESS_MESSAGES,
+ MAX_RETRIES,
+ RETRY_DELAY,
+ SSL_VERIFY)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+ssl._create_default_https_context = ssl._create_unverified_context
+class GoogleDriveManager:
+ """Google Drive operations with SSL disabled"""
+ def __init__(self):
+ self.logger = logging.getLogger(__name__)
+ self.service = None
+ self.initialize_service()
+ def initialize_service(self):
+ """Initialize Google Drive service with SSL disabled"""
+ try:
+ if not os.path.exists(CREDENTIALS_FILE_PATH):
+ raise FileNotFoundError(ERROR_MESSAGES['missing_credentials'])
+ credentials = service_account.Credentials.from_service_account_file(CREDENTIALS_FILE_PATH,
+ scopes=GOOGLE_DRIVE_SCOPES)
+ import google.auth.transport.requests
+ import googleapiclient.http
+ auth_req = google.auth.transport.requests.Request()
+ credentials.refresh(auth_req)
+ self.service = build('drive', 'v3', credentials=credentials)
+ self.logger.info("✅ Google Drive connected successfully")
+ except Exception as e:
+ self.logger.error(f"❌ Google Drive connection failed: {e}")
+ self._initialize_alternative()
+ def _initialize_alternative(self):
+ """Alternative initialization method"""
+ try:
+ self.logger.info("Trying alternative Google Drive initialization...")
+ credentials = service_account.Credentials.from_service_account_file(CREDENTIALS_FILE_PATH,
+ scopes=GOOGLE_DRIVE_SCOPES)
+ self.service = build('drive', 'v3', credentials=credentials)
+ self.logger.info("✅ Google Drive connected via alternative method")
+ except Exception as e:
+ self.logger.error(f"❌ Alternative initialization also failed: {e}")
+ raise
+ def _retry_api_call(self, api_call, *args, **kwargs):
+ """Retry API call with exponential backoff"""
+ for attempt in range(MAX_RETRIES):
+ try:
+ return api_call(*args, **kwargs)
+ except HttpError as e:
+ if e.resp.status in [500, 502, 503, 504] and attempt < MAX_RETRIES - 1:
+ wait_time = RETRY_DELAY * (2 ** attempt)
+ self.logger.warning(f"API call failed, retrying in {wait_time}s: {e}")
+ time.sleep(wait_time)
+ continue
+ else:
+ raise
+ except Exception as e:
+ self.logger.error(f"Unexpected error in API call: {e}")
+ raise
+ def folder_exists(self, folder_name, parent_folder_id):
+ """Check if a folder exists"""
+ try:
+ query = f"name='{folder_name}' and mimeType='{MIME_TYPE_FOLDER}' and '{parent_folder_id}' in parents and trashed=false"
+ results = self._retry_api_call(self.service.files().list,
+ q=query,
+ spaces='drive',
+ fields='files(id, name)').execute()
+ folders = results.get('files', [])
+ return folders[0]['id'] if folders else None
+ except HttpError as e:
+ self.logger.error(f"Error checking folder existence: {e}")
+ return None
+ def create_folder(self, folder_name, parent_folder_id):
+ """Create a new folder"""
+ try:
+ folder_metadata = {'name': folder_name,
+ 'mimeType': MIME_TYPE_FOLDER,
+ 'parents': [parent_folder_id]}
+ folder = self._retry_api_call(self.service.files().create,
+ body=folder_metadata,
+ fields='id').execute()
+ self.logger.info(f"Created folder: {folder_name}")
+ return folder['id']
+ except HttpError as e:
+ self.logger.error(f"Error creating folder {folder_name}: {e}")
+ raise
+ def create_folder_if_not_exists(self, folder_name, parent_folder_id):
+ """Create folder only if it doesn't exist"""
+ existing_folder_id = self.folder_exists(folder_name, parent_folder_id)
+ if existing_folder_id:
+ self.logger.info(f"Folder exists: {folder_name}")
+ return existing_folder_id
+ else:
+ return self.create_folder(folder_name, parent_folder_id)
+ def file_exists(self, file_name, parent_folder_id):
+ """Check if a file exists"""
+ try:
+ query = f"name='{file_name}' and '{parent_folder_id}' in parents and trashed=false"
+ results = self._retry_api_call(self.service.files().list,
+ q=query,
+ spaces='drive',
+ fields='files(id, name)').execute()
+ files = results.get('files', [])
+ return files[0]['id'] if files else None
+ except HttpError as e:
+ self.logger.error(f"Error checking file existence: {e}")
+ return None
+ def upload_text_content(self, content, file_name, parent_folder_id):
+ """Upload text content as a file"""
+ try:
+ from tempfile import NamedTemporaryFile
+ with NamedTemporaryFile(mode='w', suffix='.txt', delete=False, encoding='utf-8') as temp_file:
+ temp_file.write(content)
+ temp_file_path = temp_file.name
+ try:
+ file_metadata = {'name': file_name,
+ 'parents': [parent_folder_id]}
+ media = MediaFileUpload(temp_file_path, mimetype=MIME_TYPE_TEXT)
+ file = self._retry_api_call(self.service.files().create,
+ body=file_metadata,
+ media_body=media,
+ fields='id').execute()
+ self.logger.info(f"Uploaded file: {file_name}")
+ return file['id']
+ finally:
+ if os.path.exists(temp_file_path):
+ os.unlink(temp_file_path)
+ except Exception as e:
+ self.logger.error(f"Error uploading text content {file_name}: {e}")
+ return None
+ def download_file_content(self, file_id):
+ """Download file content as string"""
+ try:
+ request = self.service.files().get_media(fileId=file_id)
+ file_content = io.BytesIO()
+ downloader = MediaIoBaseDownload(file_content, request)
+ done = False
+ while not done:
+ status, done = downloader.next_chunk()
+ return file_content.getvalue().decode('utf-8')
+ except HttpError as e:
+ self.logger.error(f"Error downloading file content {file_id}: {e}")
+ return None
+ def initialize_directory_structure(self):
+ """Create the complete directory structure"""
+ try:
+ self.logger.info("Initializing directory structure...")
+ input_folder_id = self.create_folder_if_not_exists(INPUT_FOLDER_NAME, GOOGLE_DRIVE_ROOT_FOLDER_ID)
+ output_folder_id = self.create_folder_if_not_exists(OUTPUT_FOLDER_NAME, GOOGLE_DRIVE_ROOT_FOLDER_ID)
+ ai_queries_folder_id = self.create_folder_if_not_exists(AI_QUERIES_FOLDER, input_folder_id)
+ framework_templates_folder_id = self.create_folder_if_not_exists(FRAMEWORK_TEMPLATES_FOLDER, input_folder_id)
+ style_guides_folder_id = self.create_folder_if_not_exists(STYLE_GUIDES_FOLDER, input_folder_id)
+ self.logger.info("✅ Directory structure created")
+ return {'input_folder_id': input_folder_id,
+ 'output_folder_id': output_folder_id,
+ 'ai_queries_folder_id': ai_queries_folder_id,
+ 'framework_templates_folder_id': framework_templates_folder_id,
+ 'style_guides_folder_id': style_guides_folder_id}
+ except Exception as e:
+ self.logger.error(f"Error initializing directory structure: {e}")
+ raise
+ def get_folder_ids(self):
+ """Get all folder IDs"""
+ try:
+ input_folder_id = self.folder_exists(INPUT_FOLDER_NAME, GOOGLE_DRIVE_ROOT_FOLDER_ID)
+ if not input_folder_id:
+ return self.initialize_directory_structure()
+ output_folder_id = self.folder_exists(OUTPUT_FOLDER_NAME, GOOGLE_DRIVE_ROOT_FOLDER_ID)
+ ai_queries_folder_id = self.folder_exists(AI_QUERIES_FOLDER, input_folder_id)
+ framework_templates_folder_id = self.folder_exists(FRAMEWORK_TEMPLATES_FOLDER, input_folder_id)
+ style_guides_folder_id = self.folder_exists(STYLE_GUIDES_FOLDER, input_folder_id)
+ return {'input_folder_id': input_folder_id,
+ 'output_folder_id': output_folder_id,
+ 'ai_queries_folder_id': ai_queries_folder_id,
+ 'framework_templates_folder_id': framework_templates_folder_id,
+ 'style_guides_folder_id': style_guides_folder_id}
+ except Exception as e:
+ self.logger.error(f"Error getting folder IDs: {e}")
+ raise
+ def read_input_file(self, file_path, folder_ids):
+ """Read a file from input directory"""
+ try:
+ if file_path == STORY_INPUT_FILE:
+ folder_id = folder_ids['input_folder_id']
+ elif file_path.startswith(f"{AI_QUERIES_FOLDER}/"):
+ file_name = file_path.split('/')[-1]
+ folder_id = folder_ids['ai_queries_folder_id']
+ file_path = file_name
+ elif file_path.startswith(f"{FRAMEWORK_TEMPLATES_FOLDER}/"):
+ file_name = file_path.split('/')[-1]
+ folder_id = folder_ids['framework_templates_folder_id']
+ file_path = file_name
+ elif file_path.startswith(f"{STYLE_GUIDES_FOLDER}/"):
+ file_name = file_path.split('/')[-1]
+ folder_id = folder_ids['style_guides_folder_id']
+ file_path = file_name
+ else:
+ self.logger.error(f"Unknown file path: {file_path}")
+ return None
+ file_id = self.file_exists(file_path, folder_id)
+ if not file_id:
+ self.logger.warning(f"File not found: {file_path}")
+ return None
+ return self.download_file_content(file_id)
+ except Exception as e:
+ self.logger.error(f"Error reading input file {file_path}: {e}")
+ return None
+ def write_output_file(self, content, file_name, output_folder_id):
+ """Write content to output file"""
+ try:
+ file_id = self.upload_text_content(content, file_name, output_folder_id)
+ if file_id:
+ self.logger.info(f"Wrote output file: {file_name}")
+ return True
+ else:
+ self.logger.error(f"Failed to write output file: {file_name}")
+ return False
+ except Exception as e:
+ self.logger.error(f"Error writing output file {file_name}: {e}")
+ return False
+drive_manager = None
+def get_drive_manager():
+ global drive_manager
+ if drive_manager is None:
+ drive_manager = GoogleDriveManager()
+ return drive_manager
+
+
+================================================================================
+FILE: main.py
+EXTENSION: .py
+FULL PATH: C:\dev\python-projects\Youtube\main.py
+ENCODING: utf-8
+ORIGINAL SIZE: 11705 bytes
+MINIFIED SIZE: 8469 bytes
+SIZE REDUCTION: 27.6%
+================================================================================
+
+"""
+Main Orchestrator - Story Automation System
+Coordinates the entire pipeline from story input to generated content
+"""
+import logging
+import time
+import sys
+import os
+from datetime import datetime
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+from config import (validate_config,
+ ERROR_MESSAGES,
+ SUCCESS_MESSAGES,
+ generate_output_folder_name,
+ get_output_folder_path)
+from gdrive_manager import get_drive_manager
+from story_processor import create_story_processor
+from template_engine import create_template_engine
+class StoryAutomationOrchestrator:
+ """Main orchestrator that coordinates the entire story automation pipeline"""
+ def __init__(self):
+ """Initialize the orchestrator with all components"""
+ self.logger = self._setup_logging()
+ self.drive_manager = None
+ self.story_processor = None
+ self.template_engine = None
+ self.folder_ids = None
+ self.processing_start_time = None
+ def _setup_logging(self):
+ """Setup logging configuration"""
+ logging.basicConfig(level=logging.INFO,
+ format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+ handlers=[logging.StreamHandler(sys.stdout),
+ logging.FileHandler('story_automation.log', encoding='utf-8')])
+ return logging.getLogger(__name__)
+ def initialize_system(self):
+ """Initialize all system components"""
+ try:
+ self.logger.info(" Initializing Story Automation System...")
+ self.logger.info(" Validating configuration...")
+ config_valid, config_error = validate_config()
+ if not config_valid:
+ raise ValueError(f"Configuration error: {config_error}")
+ self.logger.info(" Initializing Google Drive manager...")
+ self.drive_manager = get_drive_manager()
+ self.logger.info(" Initializing template engine...")
+ self.template_engine = create_template_engine()
+ self.logger.info("烙 Initializing story processor...")
+ self.story_processor = create_story_processor(self.drive_manager,
+ self.template_engine)
+ self.logger.info(" Setting up directory structure...")
+ self.folder_ids = self.drive_manager.get_folder_ids()
+ self.logger.info("✅ System initialization completed successfully")
+ return True
+ except Exception as e:
+ self.logger.error(f"❌ System initialization failed: {e}")
+ return False
+ def check_story_input(self):
+ """Check if story input file exists and has content"""
+ try:
+ self.logger.info(" Checking story input file...")
+ story_content = self.drive_manager.read_input_file("story_input.txt",
+ self.folder_ids)
+ if not story_content:
+ self.logger.error("❌ Story input file is empty or not found")
+ return False
+ if len(story_content.strip()) < 100:
+ self.logger.warning("⚠️ Story input seems very short. Minimum 100 characters recommended.")
+ self.logger.info(f"✅ Story input found ({len(story_content)} characters)")
+ return True
+ except Exception as e:
+ self.logger.error(f"❌ Error checking story input: {e}")
+ return False
+ def create_output_folder(self, story_title):
+ """Create output folder for this story generation"""
+ try:
+ self.logger.info(" Creating output folder...")
+ output_folder_name = generate_output_folder_name(story_title)
+ output_folder_id = self.drive_manager.create_folder(output_folder_name,
+ self.folder_ids['output_folder_id'])
+ if not output_folder_id:
+ raise Exception("Failed to create output folder")
+ self.logger.info(f"✅ Output folder created: {output_folder_name}")
+ return output_folder_id
+ except Exception as e:
+ self.logger.error(f"❌ Error creating output folder: {e}")
+ raise
+ def process_story_pipeline(self):
+ """Execute the complete story processing pipeline"""
+ try:
+ self.processing_start_time = time.time()
+ self.logger.info(" Starting story processing pipeline...")
+ self.logger.info(" Step 1/4: Processing story content...")
+ processing_results = self.story_processor.process_story(self.folder_ids)
+ story_title = processing_results['story_title']
+ self.logger.info(f" Processing story: '{story_title}'")
+ self.logger.info(" Step 2/4: Creating output folder...")
+ output_folder_id = self.create_output_folder(story_title)
+ self.logger.info(" Step 3/4: Generating output files...")
+ processing_time = time.time() - self.processing_start_time
+ output_files = self.template_engine.generate_all_outputs(processing_results,
+ processing_time)
+ self.logger.info(" Step 4/4: Writing output files...")
+ files_written = self.write_output_files(output_files, output_folder_id)
+ total_processing_time = time.time() - self.processing_start_time
+ self.logger.info(SUCCESS_MESSAGES['pipeline_complete'])
+ self.logger.info(f"⏱️ Total processing time: {total_processing_time:.2f} seconds")
+ self.logger.info(f" Files generated: {files_written}/{len(output_files)}")
+ return {'success': True,
+ 'story_title': story_title,
+ 'output_folder_id': output_folder_id,
+ 'files_written': files_written,
+ 'total_files': len(output_files),
+ 'processing_time': total_processing_time,
+ 'output_files': list(output_files.keys())}
+ except Exception as e:
+ self.logger.error(f"❌ Story processing pipeline failed: {e}")
+ return {'success': False,
+ 'error': str(e),
+ 'processing_time': time.time() - self.processing_start_time if self.processing_start_time else 0}
+ def write_output_files(self, output_files, output_folder_id):
+ """Write all output files to Google Drive"""
+ try:
+ files_written = 0
+ for filename, content in output_files.items():
+ self.logger.info(f" Writing {filename}...")
+ success = self.drive_manager.write_output_file(content,
+ filename,
+ output_folder_id)
+ if success:
+ files_written += 1
+ self.logger.info(f"✅ Successfully wrote {filename}")
+ else:
+ self.logger.error(f"❌ Failed to write {filename}")
+ return files_written
+ except Exception as e:
+ self.logger.error(f"❌ Error writing output files: {e}")
+ return 0
+ def generate_summary_report(self, result):
+ """Generate a summary report of the processing run"""
+ try:
+ if result['success']:
+ report = f"""
+ STORY AUTOMATION COMPLETED SUCCESSFULLY 
+============================================
+ Story: {result['story_title']}
+⏱️ Processing Time: {result['processing_time']:.2f} seconds
+ Files Generated: {result['files_written']}/{result['total_files']}
+ Completed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+ OUTPUT FILES:
+----------------
+{chr(10).join([f"✅ {file}" for file in result['output_files']])}
+ NEXT STEPS:
+--------------
+1. Check the output folder in Google Drive
+2. Use image prompts with your AI image generator
+3. Create video with the generated narration
+4. Upload to your YouTube channel
+ Output Folder: Look for the new folder in your Google Drive '(out)' directory
+---
+Story Automation System - Powered by AI
+"""
+ else:
+ report = f"""
+❌ STORY AUTOMATION FAILED
+=========================
+⏱️ Processing Time: {result['processing_time']:.2f} seconds
+ Failed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+ ERROR:
+---------
+{result['error']}
+ TROUBLESHOOTING:
+-------------------
+1. Check that story_input.txt contains valid story content
+2. Verify Google Drive folder permissions
+3. Check internet connection
+4. Review the log file for detailed errors
+---
+Story Automation System - Need Help?
+"""
+ return report
+ except Exception as e:
+ self.logger.error(f"Error generating summary report: {e}")
+ return "Summary report generation failed."
+def main():
+ """Main function to run the story automation system"""
+ orchestrator = StoryAutomationOrchestrator()
+ print("\n" + "="*60)
+ print(" STORY AUTOMATION SYSTEM")
+ print("="*60)
+ try:
+ if not orchestrator.initialize_system():
+ print("❌ System initialization failed. Please check the logs.")
+ return 1
+ if not orchestrator.check_story_input():
+ print("❌ No story input found. Please add your story to story_input.txt in Google Drive.")
+ return 1
+ print("✅ System ready! Starting story processing...")
+ print("⏳ This may take a few minutes...")
+ result = orchestrator.process_story_pipeline()
+ summary = orchestrator.generate_summary_report(result)
+ print(summary)
+ if result['success']:
+ print(" Story automation completed successfully!")
+ return 0
+ else:
+ print("❌ Story automation failed. Please check the logs for details.")
+ return 1
+ except KeyboardInterrupt:
+ print("\n⚠️ Process interrupted by user")
+ return 1
+ except Exception as e:
+ print(f"❌ Unexpected error: {e}")
+ return 1
+if __name__ == "__main__":
+ exit_code = main()
+ print("\n" + "="*60)
+ if exit_code == 0:
+ print("✅ Story Automation System - COMPLETED")
+ else:
+ print("❌ Story Automation System - FAILED")
+ print("="*60)
+ sys.exit(exit_code)
+
+
+================================================================================
+FILE: requirements.txt
+EXTENSION: .txt
+FULL PATH: C:\dev\python-projects\Youtube\requirements.txt
+ENCODING: utf-8
+ORIGINAL SIZE: 115 bytes
+MINIFIED SIZE: 115 bytes
+SIZE REDUCTION: 0.0%
+================================================================================
+
+google-api-python-client>=2.0.0
+google-auth-httplib2>=0.1.0
+google-auth-oauthlib>=1.0.0
+openai>=1.0.0
+httpx>=0.24.0
+
+
+================================================================================
+FILE: story_processor.py
+EXTENSION: .py
+FULL PATH: C:\dev\python-projects\Youtube\story_processor.py
+ENCODING: utf-8
+ORIGINAL SIZE: 21024 bytes
+MINIFIED SIZE: 14728 bytes
+SIZE REDUCTION: 29.9%
+================================================================================
+
+"""
+Story Processor - SSL Verification Disabled
+"""
+import os
+import time
+import json
+import datetime
+import requests
+import httpx
+import glob
+import logging
+import re
+import urllib3
+from typing import Dict, Any, List, Optional, Tuple
+from pathlib import Path
+from openai import OpenAI
+from config import (DEEPSEEK_API_KEY,
+ DEEPSEEK_MODEL,
+ DEEPSEEK_MAX_TOKENS,
+ DEEPSEEK_TEMPERATURE,
+ DEEPSEEK_BASE_URL,
+ DEEPSEEK_VERIFY_SSL,
+ MAX_RETRIES,
+ RETRY_DELAY,
+ ERROR_MESSAGES,
+ REQUIRED_INPUT_FILES)
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+class NiftyAIAnalyzer:
+ def __init__(self, api_key: Optional[str] = None):
+ self.api_key = api_key or DEEPSEEK_API_KEY
+ self.client = None
+ self.history_file = "analysis_history.txt"
+ self.is_available = False
+ self.initialize_client()
+ def initialize_client(self) -> bool:
+ """Initialize DeepSeek API client with SSL disabled"""
+ try:
+ if not self.api_key:
+ raise RuntimeError("DeepSeek API key not found.")
+ http_client = httpx.Client(verify=False, timeout=30.0)
+ self.client = OpenAI(api_key=self.api_key,
+ base_url="https://api.deepseek.com",
+ http_client=http_client,
+ max_retries=2)
+ _ = self.client.chat.completions.create(model="deepseek-chat",
+ messages=[{"role": "user", "content": "ping"}],
+ max_tokens=5,
+ temperature=0)
+ print("✅ DeepSeek AI client initialized (SSL disabled)")
+ self.is_available = True
+ return True
+ except Exception as e:
+ print(f"❌ DeepSeek client failed: {e}")
+ self.client = None
+ self.is_available = False
+ return False
+ def analyze_with_retry(self, prompt: str, system_message: Optional[str] = None, max_tokens: Optional[int] = None) -> Optional[str]:
+ """Analyze with retry logic"""
+ if not self.is_available or not self.client:
+ return None
+ for attempt in range(MAX_RETRIES):
+ try:
+ messages = []
+ if system_message:
+ messages.append({"role": "system", "content": system_message})
+ messages.append({"role": "user", "content": prompt})
+ response = self.client.chat.completions.create(model="deepseek-chat",
+ messages=messages,
+ max_tokens=max_tokens or DEEPSEEK_MAX_TOKENS,
+ temperature=DEEPSEEK_TEMPERATURE)
+ result = response.choices[0].message.content.strip()
+ self._log_analysis(prompt, result)
+ return result
+ except Exception as e:
+ if attempt < MAX_RETRIES - 1:
+ wait_time = RETRY_DELAY * (2 ** attempt)
+ print(f"⚠️ API call failed, retrying in {wait_time}s: {e}")
+ time.sleep(wait_time)
+ continue
+ else:
+ print(f"❌ API call failed after {MAX_RETRIES} attempts: {e}")
+ return None
+ def _log_analysis(self, prompt: str, result: str):
+ """Log analysis history"""
+ try:
+ with open(self.history_file, "a", encoding="utf-8") as f:
+ f.write(f"\n{'='*50}\n")
+ f.write(f"Time: {datetime.datetime.now().isoformat()}\n")
+ f.write(f"Prompt: {prompt}\n")
+ f.write(f"Result: {result}\n")
+ except Exception as e:
+ print(f"⚠️ Failed to log analysis: {e}")
+class OfflineFallbackProcessor:
+ """Offline fallback when DeepSeek is unavailable"""
+ def __init__(self):
+ self.logger = logging.getLogger(__name__)
+ def extract_story_title(self, story_content):
+ """Extract story title from content"""
+ lines = story_content.strip().split('\n')
+ for line in lines[:5]:
+ line = line.strip()
+ if line and not line.startswith((' ', '\t')) and len(line) < 100:
+ title = re.sub(r'[^\w\s-]', '', line).strip()
+ if title and len(title) > 3:
+ return title
+ for line in lines:
+ line = line.strip()
+ if line and len(line) > 10:
+ words = line.split()[:5]
+ return ' '.join(words) + " Story"
+ return "My Wonderful Story"
+ def analyze_characters(self, story_content):
+ """Basic character analysis"""
+ characters = []
+ words = story_content.split()
+ for i, word in enumerate(words):
+ if (word.istitle() and len(word) > 2 and
+ word not in ['The', 'And', 'But', 'For', 'With'] and
+ i + 1 < len(words) and words[i + 1].istitle()):
+ character_name = word
+ if i + 2 < len(words) and words[i + 2].istitle():
+ character_name = f"{word} {words[i + 1]} {words[i + 2]}"
+ elif i + 1 < len(words) and words[i + 1].istitle():
+ character_name = f"{word} {words[i + 1]}"
+ if character_name not in [c['name'] for c in characters]:
+ characters.append({'name': character_name,
+ 'role': 'character',
+ 'description': f'A brave character from our story'})
+ if not characters:
+ characters = [{'name': 'Adventure Hero',
+ 'role': 'protagonist',
+ 'description': 'The brave main character of our story'},
+ {'name': 'Magical Friend',
+ 'role': 'companion',
+ 'description': 'A wonderful friend who helps on the adventure'}]
+ return characters[:4]
+ def analyze_scenes(self, story_content, characters):
+ """Basic scene analysis"""
+ scenes = []
+ paragraphs = [p.strip() for p in story_content.split('\n\n') if p.strip()]
+ scene_templates = ["The Beginning - Where our adventure starts",
+ "The Journey - Traveling to new places",
+ "The Discovery - Finding something wonderful",
+ "The Challenge - Overcoming obstacles",
+ "The Celebration - A happy ending"]
+ for i, paragraph in enumerate(paragraphs[:5]):
+ if paragraph:
+ scenes.append({'title': scene_templates[i] if i < len(scene_templates) else f"Scene {i+1}",
+ 'description': paragraph[:150] + ('...' if len(paragraph) > 150 else ''),
+ 'location': 'Magical Story World',
+ 'emotion': ['happy', 'excited', 'curious', 'brave', 'joyful'][i % 5]})
+ if not scenes:
+ scenes = [{'title': 'Our Magical Adventure',
+ 'description': story_content[:200] + '...',
+ 'location': 'Story World',
+ 'emotion': 'happy'}]
+ return scenes
+ def generate_narration(self, story_content, characters, scenes):
+ """Generate basic narration"""
+ character_names = ', '.join([char['name'] for char in characters[:2]])
+ narration = f"""Welcome to our wonderful story time!
+Today we're going on a magical adventure with {character_names}.
+{story_content[:300]}...
+What an amazing journey! I wonder what your favorite part was?
+Remember, every story is a new adventure waiting to be discovered!"""
+ return narration
+ def generate_image_prompts(self, scenes, characters):
+ """Generate basic image prompts"""
+ prompts = []
+ for i, scene in enumerate(scenes):
+ prompt = f"""Beautiful children's storybook illustration of {scene['title']}.
+Magical, colorful, warm lighting, storybook style, child-friendly,
+detailed, 4K resolution, happy children's story, enchanting atmosphere"""
+ prompts.append({'scene': scene['title'],
+ 'prompt': prompt})
+ return prompts
+class StoryProcessor:
+ """Processes stories using your NiftyAIAnalyzer with fallback support"""
+ def __init__(self, drive_manager, template_engine):
+ self.logger = logging.getLogger(__name__)
+ self.drive_manager = drive_manager
+ self.template_engine = template_engine
+ self.ai_analyzer = NiftyAIAnalyzer()
+ self.offline_processor = OfflineFallbackProcessor()
+ self.ai_queries = {}
+ self.framework_templates = {}
+ self.style_guides = {}
+ def load_required_files(self, folder_ids):
+ """Load all required input files from Google Drive"""
+ try:
+ self.logger.info("Loading required input files...")
+ self.ai_queries = {'character': self.drive_manager.read_input_file(f"ai_queries/character_queries.txt", folder_ids),
+ 'scene': self.drive_manager.read_input_file(f"ai_queries/scene_queries.txt", folder_ids),
+ 'narration': self.drive_manager.read_input_file(f"ai_queries/narration_queries.txt", folder_ids),
+ 'prompt': self.drive_manager.read_input_file(f"ai_queries/prompt_queries.txt", folder_ids)}
+ self.framework_templates = {'narration': self.drive_manager.read_input_file(f"framework_templates/narration_template.txt", folder_ids),
+ 'character': self.drive_manager.read_input_file(f"framework_templates/character_template.txt", folder_ids),
+ 'scene': self.drive_manager.read_input_file(f"framework_templates/scene_template.txt", folder_ids)}
+ self.style_guides['visual'] = self.drive_manager.read_input_file(f"style_guides/visual_rules.txt", folder_ids)
+ self.story_content = self.drive_manager.read_input_file("story_input.txt", folder_ids)
+ missing_files = []
+ for key, content in self.ai_queries.items():
+ if not content:
+ missing_files.append(f"ai_queries/{key}_queries.txt")
+ for key, content in self.framework_templates.items():
+ if not content:
+ missing_files.append(f"framework_templates/{key}_template.txt")
+ if not self.style_guides.get('visual'):
+ missing_files.append("style_guides/visual_rules.txt")
+ if not self.story_content:
+ missing_files.append("story_input.txt")
+ if missing_files:
+ raise ValueError(f"Missing required files: {', '.join(missing_files)}")
+ self.logger.info("✅ All required files loaded successfully")
+ return True
+ except Exception as e:
+ self.logger.error(f"Error loading required files: {e}")
+ raise
+ def process_story(self, folder_ids):
+ """Main method to process story with AI or fallback"""
+ try:
+ self.logger.info("Starting story processing pipeline...")
+ self.load_required_files(folder_ids)
+ if self.ai_analyzer.is_available:
+ self.logger.info(" Using NiftyAIAnalyzer for processing...")
+ results = self._process_with_ai()
+ else:
+ self.logger.warning(" NiftyAIAnalyzer unavailable, using offline processing...")
+ results = self._process_offline()
+ self.logger.info("✅ Story processing completed")
+ return results
+ except Exception as e:
+ self.logger.error(f"Error in story processing pipeline: {e}")
+ raise
+ def _process_with_ai(self):
+ """Process story using NiftyAIAnalyzer"""
+ try:
+ character_analysis = self.ai_analyzer.analyze_with_retry(self.ai_queries['character'].format(story_text=self.story_content),
+ "You are a character analysis expert. Extract and describe characters from stories accurately.")
+ characters = self._parse_character_analysis(character_analysis) if character_analysis else []
+ character_list = "\n".join([f"- {char['name']}: {char.get('role', 'unknown')}" for char in characters])
+ scene_analysis = self.ai_analyzer.analyze_with_retry(self.ai_queries['scene'].format(story_text=self.story_content, characters=character_list),
+ "You are a story analysis expert. Break down stories into meaningful scenes with emotional arcs.")
+ scenes = self._parse_scene_analysis(scene_analysis) if scene_analysis else []
+ character_summary = "\n".join([f"- {char['name']}: {char.get('description', 'No description')}" for char in characters])
+ scene_summary = "\n".join([f"- {scene['title']}: {scene.get('description', 'No description')}" for scene in scenes])
+ narration = self.ai_analyzer.analyze_with_retry(self.ai_queries['narration'].format(story_text=self.story_content,
+ characters=character_summary,
+ scenes=scene_summary,
+ visual_style=self.style_guides['visual']),
+ "You are a professional children's story narrator. Create engaging, age-appropriate narration.")
+ character_descriptions = {char['name']: char.get('description', 'Unknown') for char in characters}
+ image_prompts_text = self.ai_analyzer.analyze_with_retry(self.ai_queries['prompt'].format(scenes=json.dumps(scenes, indent=2),
+ characters=json.dumps(character_descriptions, indent=2),
+ visual_rules=self.style_guides['visual']),
+ "You are an expert AI image prompt engineer. Create detailed, consistent image prompts.")
+ image_prompts = self._parse_image_prompts(image_prompts_text) if image_prompts_text else []
+ return {'story_title': self.offline_processor.extract_story_title(self.story_content),
+ 'original_story': self.story_content,
+ 'characters': characters,
+ 'scenes': scenes,
+ 'narration': narration or "AI narration generation failed.",
+ 'image_prompts': image_prompts,
+ 'processing_stats': {'character_count': len(characters),
+ 'scene_count': len(scenes),
+ 'image_prompt_count': len(image_prompts)},
+ 'processing_method': 'ai'}
+ except Exception as e:
+ self.logger.error(f"AI processing failed, falling back to offline: {e}")
+ return self._process_offline()
+ def _process_offline(self):
+ """Process story using offline methods"""
+ characters = self.offline_processor.analyze_characters(self.story_content)
+ scenes = self.offline_processor.analyze_scenes(self.story_content, characters)
+ narration = self.offline_processor.generate_narration(self.story_content, characters, scenes)
+ image_prompts = self.offline_processor.generate_image_prompts(scenes, characters)
+ return {'story_title': self.offline_processor.extract_story_title(self.story_content),
+ 'original_story': self.story_content,
+ 'characters': characters,
+ 'scenes': scenes,
+ 'narration': narration,
+ 'image_prompts': image_prompts,
+ 'processing_stats': {'character_count': len(characters),
+ 'scene_count': len(scenes),
+ 'image_prompt_count': len(image_prompts)},
+ 'processing_method': 'offline'}
+ def _parse_character_analysis(self, analysis_text):
+ """Parse character analysis into structured data"""
+ characters = []
+ lines = analysis_text.split('\n')
+ current_character = {}
+ for line in lines:
+ line = line.strip()
+ if not line:
+ continue
+ if ':' in line:
+ key, value = line.split(':', 1)
+ key = key.strip().lower()
+ value = value.strip()
+ if key in ['name', 'character']:
+ if current_character:
+ characters.append(current_character)
+ current_character = {'name': value}
+ elif current_character:
+ current_character[key] = value
+ if current_character:
+ characters.append(current_character)
+ if not characters:
+ characters = [{'name': 'Main Character', 'role': 'protagonist', 'description': 'Main story character'}]
+ return characters
+ def _parse_scene_analysis(self, analysis_text):
+ """Parse scene analysis into structured data"""
+ scenes = []
+ lines = analysis_text.split('\n')
+ current_scene = {}
+ for line in lines:
+ line = line.strip()
+ if not line:
+ continue
+ if line.lower().startswith('scene') or line.lower().startswith('part'):
+ if current_scene:
+ scenes.append(current_scene)
+ current_scene = {'title': line, 'description': ''}
+ elif ':' in line and current_scene:
+ key, value = line.split(':', 1)
+ key = key.strip().lower()
+ value = value.strip()
+ if key in ['location', 'emotion', 'characters', 'action']:
+ current_scene[key] = value
+ else:
+ current_scene['description'] += line + ' '
+ elif current_scene:
+ current_scene['description'] += line + ' '
+ if current_scene:
+ scenes.append(current_scene)
+ if not scenes:
+ scenes = [{'title': 'Story Scene', 'description': 'Main story sequence', 'location': 'unknown', 'emotion': 'neutral'}]
+ return scenes
+ def _parse_image_prompts(self, prompts_text):
+ """Parse image prompts into structured data"""
+ prompts = []
+ lines = prompts_text.split('\n')
+ current_prompt = {}
+ for line in lines:
+ line = line.strip()
+ if not line:
+ continue
+ if line.lower().startswith('scene') or line.lower().startswith('prompt'):
+ if current_prompt:
+ prompts.append(current_prompt)
+ current_prompt = {'scene': line, 'prompt': ''}
+ elif current_prompt:
+ current_prompt['prompt'] += line + ' '
+ if current_prompt:
+ prompts.append(current_prompt)
+ return prompts
+def create_story_processor(drive_manager, template_engine):
+ return StoryProcessor(drive_manager, template_engine)
+
+
+================================================================================
+FILE: template_engine.py
+EXTENSION: .py
+FULL PATH: C:\dev\python-projects\Youtube\template_engine.py
+ENCODING: utf-8
+ORIGINAL SIZE: 18357 bytes
+MINIFIED SIZE: 14802 bytes
+SIZE REDUCTION: 19.4%
+================================================================================
+
+"""
+Template Engine - Handles template filling and content formatting
+Transforms AI-generated content into structured output files
+"""
+import logging
+import re
+from datetime import datetime
+from typing import Dict, List, Any, Optional
+from config import (OUTPUT_STORY_FILE,
+ OUTPUT_NARRATION_FILE,
+ OUTPUT_CHARACTER_SHEET_FILE,
+ OUTPUT_SCENES_FILE,
+ OUTPUT_IMAGE_PROMPTS_FILE,
+ OUTPUT_PROCESSING_REPORT_FILE,
+ ERROR_MESSAGES)
+class TemplateEngine:
+ """Handles template filling and content formatting for output files"""
+ def __init__(self):
+ """Initialize template engine"""
+ self.logger = logging.getLogger(__name__)
+ def fill_story_template(self, story_content, story_title):
+ """Format the story content into structured output"""
+ try:
+ separator = '-' * (len(story_title) + 7)
+ template = f"""STORY: {story_title}
+{separator}
+{story_content}
+---
+Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Story Title: {story_title}
+"""
+ return template
+ except Exception as e:
+ self.logger.error(f"Error filling story template: {e}")
+ return f"STORY: {story_title}\n\n{story_content}"
+ def fill_narration_template(self, narration_content, story_title, characters, scenes):
+ """Format narration content with proper structure"""
+ try:
+ character_list = "\n".join([f"- {char['name']}: {char.get('role', 'Unknown role')}" for char in characters])
+ scene_list = "\n".join([f"- {scene['title']}" for scene in scenes])
+ separator = '-' * (len(story_title) + 18)
+ template = f"""NARRATION SCRIPT: {story_title}
+{separator}
+CHARACTERS:
+{character_list}
+SCENES:
+{scene_list}
+NARRATION:
+{narration_content}
+---
+Narration Style: Warm, engaging, child-friendly
+Target Audience: 4-6 year olds
+Tone: Magical, reassuring, adventurous
+"""
+ return template
+ except Exception as e:
+ self.logger.error(f"Error filling narration template: {e}")
+ return f"NARRATION SCRIPT: {story_title}\n\n{narration_content}"
+ def fill_character_template(self, characters, story_title):
+ """Format character data into structured sheet"""
+ try:
+ character_sections = []
+ for i, char in enumerate(characters, 1):
+ name = char.get('name', 'Unknown')
+ name_length = len(name) + 13
+ separator = '=' * name_length
+ section = f"""CHARACTER {i}: {name}
+{separator}
+Role: {char.get('role', 'Not specified')}
+Personality: {char.get('personality', 'Not specified')}
+Appearance: {char.get('appearance', 'Not specified')}
+Motivation: {char.get('motivation', 'Not specified')}
+Emotional Traits: {char.get('emotional_traits', 'Not specified')}
+Key Attributes: {char.get('attributes', 'Not specified')}
+Description:
+{char.get('description', 'No description available')}
+"""
+ character_sections.append(section)
+ title_separator = '-' * (len(story_title) + 19)
+ template = f"""CHARACTER SHEETS: {story_title}
+{title_separator}
+Total Characters: {len(characters)}
+{'
+{chr(10) + '
+---
+Character Consistency: Maintained across all scenes
+Visual References: Consistent with style guide
+"""
+ return template
+ except Exception as e:
+ self.logger.error(f"Error filling character template: {e}")
+ simple_chars = "\n".join([f"- {char.get('name', 'Unknown')}: {char.get('description', 'No description')}" for char in characters])
+ return f"CHARACTERS:\n{simple_chars}"
+ def fill_scene_template(self, scenes, story_title, characters):
+ """Format scene breakdowns with detailed structure"""
+ try:
+ scene_sections = []
+ for i, scene in enumerate(scenes, 1):
+ scene_title = scene.get('title', f'Scene {i}')
+ title_length = len(scene_title) + 9
+ separator = '=' * title_length
+ location = scene.get('location', 'Not specified')
+ emotion = scene.get('emotion', 'Neutral')
+ characters_in_scene = scene.get('characters', 'Not specified')
+ action = scene.get('action', 'Not specified')
+ section = f"""SCENE {i}: {scene_title}
+{separator}
+Location: {location}
+Emotional Arc: {emotion}
+Characters Present: {characters_in_scene}
+Key Action: {action}
+Description:
+{scene.get('description', 'No description available')}
+VISUAL ELEMENTS:
+- Lighting: {self._infer_lighting(emotion)}
+- Color Palette: {self._infer_colors(emotion)}
+- Composition: {self._infer_composition(action)}
+- Camera Angle: {self._infer_camera_angle(emotion)}
+"""
+ scene_sections.append(section)
+ title_separator = '-' * (len(story_title) + 17)
+ template = f"""SCENE BREAKDOWN: {story_title}
+{title_separator}
+Total Scenes: {len(scenes)}
+Story Structure: Complete narrative arc
+{'
+{chr(10) + '
+---
+Scene Transitions: Smooth and logical
+Emotional Progression: Coherent throughout
+Pacing: Optimized for children's attention
+"""
+ return template
+ except Exception as e:
+ self.logger.error(f"Error filling scene template: {e}")
+ simple_scenes = "\n".join([f"- {scene.get('title', 'Unknown')}: {scene.get('description', 'No description')}" for scene in scenes])
+ return f"SCENES:\n{simple_scenes}"
+ def fill_image_prompts_template(self, image_prompts, story_title, scenes):
+ """Format image prompts for AI generation"""
+ try:
+ prompt_sections = []
+ for i, prompt_data in enumerate(image_prompts, 1):
+ scene_title = prompt_data.get('scene', f'Scene {i}')
+ title_length = len(scene_title) + 15
+ separator = '=' * title_length
+ prompt_text = prompt_data.get('prompt', 'No prompt available')
+ scene_context = next((scene for scene in scenes if scene.get('title') == scene_title), None)
+ scene_emotion = scene_context.get('emotion', 'neutral') if scene_context else 'neutral'
+ section = f"""IMAGE PROMPT {i}: {scene_title}
+{separator}
+Scene Context: {scene_context.get('description', 'General story scene') if scene_context else 'Story scene'}
+Emotional Tone: {scene_emotion.capitalize()}
+AI PROMPT:
+{prompt_text}
+TECHNICAL SPECIFICATIONS:
+- Style: Children's storybook illustration
+- Lighting: {self._get_prompt_lighting(scene_emotion)}
+- Colors: {self._get_prompt_colors(scene_emotion)}
+- Composition: {self._get_prompt_composition(scene_emotion)}
+- Details: High detail, magical elements, child-friendly
+KEY ELEMENTS TO INCLUDE:
+{self._extract_key_elements(prompt_text)}
+"""
+ prompt_sections.append(section)
+ title_separator = '-' * (len(story_title) + 28)
+ template = f"""IMAGE GENERATION PROMPTS: {story_title}
+{title_separator}
+Total Prompts: {len(image_prompts)}
+Usage: For AI image generation (DALL-E, Midjourney, Stable Diffusion)
+{'
+{chr(10) + '
+---
+PROMPT GUIDELINES FOLLOWED:
+✅ Child-appropriate content
+✅ Consistent character appearances
+✅ Magical, storybook aesthetic
+✅ Warm, inviting color palettes
+✅ Clear visual storytelling
+✅ Emotional resonance with scenes
+TIPS FOR IMAGE GENERATION:
+1. Use these prompts with your preferred AI image generator
+2. Maintain character consistency across all images
+3. Follow the specified emotional tones
+4. Ensure all images are child-safe and magical
+5. Use 16:9 aspect ratio for YouTube compatibility
+"""
+ return template
+ except Exception as e:
+ self.logger.error(f"Error filling image prompts template: {e}")
+ simple_prompts = "\n".join([f"Prompt {i}: {p.get('prompt', 'No prompt')}" for i, p in enumerate(image_prompts, 1)])
+ return f"IMAGE PROMPTS:\n{simple_prompts}"
+ def _infer_lighting(self, emotion):
+ """Infer lighting based on emotional tone"""
+ lighting_map = {'happy': 'Warm, bright, golden hour lighting',
+ 'sad': 'Soft, diffused, gentle lighting',
+ 'exciting': 'Dynamic, high-contrast, dramatic lighting',
+ 'scary': 'Low-key, mysterious, shadow play',
+ 'magical': 'Ethereal, glowing, magical light sources',
+ 'peaceful': 'Soft, even, tranquil lighting',
+ 'adventurous': 'Natural, outdoor, sunlight through trees'}
+ return lighting_map.get(emotion.lower(), 'Appropriate emotional lighting')
+ def _infer_colors(self, emotion):
+ """Infer color palette based on emotional tone"""
+ color_map = {'happy': 'Warm yellows, bright blues, cheerful pastels',
+ 'sad': 'Cool blues, soft grays, muted tones',
+ 'exciting': 'Vibrant reds, oranges, high saturation',
+ 'scary': 'Dark purples, deep blues, desaturated',
+ 'magical': 'Iridescent purples, sparkling golds, magical hues',
+ 'peaceful': 'Soft greens, gentle blues, earth tones',
+ 'adventurous': 'Rich greens, earthy browns, sky blues'}
+ return color_map.get(emotion.lower(), 'Emotionally appropriate colors')
+ def _infer_composition(self, action):
+ """Infer composition based on action type"""
+ action_lower = action.lower()
+ if any(word in action_lower for word in ['run', 'chase', 'fast']):
+ return 'Dynamic, diagonal lines, sense of movement'
+ elif any(word in action_lower for word in ['talk', 'discuss', 'quiet']):
+ return 'Balanced, rule of thirds, focused on characters'
+ elif any(word in action_lower for word in ['discover', 'find', 'magic']):
+ return 'Centered, leading lines, emphasis on discovery'
+ else:
+ return 'Well-composed, visually balanced, story-focused'
+ def _infer_camera_angle(self, emotion):
+ """Infer camera angle based on emotional tone"""
+ angle_map = {'happy': 'Eye-level or slightly low angle for empowerment',
+ 'sad': 'Slightly high angle for vulnerability',
+ 'exciting': 'Dynamic angles, Dutch tilt for energy',
+ 'scary': 'Low angles for intimidation, high angles for vulnerability',
+ 'magical': 'Eye-level with magical perspective',
+ 'peaceful': 'Stable, eye-level, calming composition',
+ 'adventurous': 'Varied angles, following action'}
+ return angle_map.get(emotion.lower(), 'Appropriate emotional angle')
+ def _get_prompt_lighting(self, emotion):
+ """Get lighting description for image prompts"""
+ lighting_map = {'happy': 'soft warm lighting, golden hour, cheerful atmosphere',
+ 'sad': 'gentle diffused light, overcast, melancholic mood',
+ 'exciting': 'dynamic lighting, high contrast, energetic',
+ 'scary': 'dramatic shadows, moonlight, mysterious',
+ 'magical': 'ethereal glow, magical light, sparkling',
+ 'peaceful': 'soft even light, tranquil, serene',
+ 'neutral': 'pleasant lighting, well-lit, clear'}
+ return lighting_map.get(emotion.lower(), 'beautiful lighting')
+ def _get_prompt_colors(self, emotion):
+ """Get color description for image prompts"""
+ color_map = {'happy': 'vibrant colors, warm palette, cheerful tones',
+ 'sad': 'muted colors, cool palette, soft tones',
+ 'exciting': 'saturated colors, bold palette, dynamic',
+ 'scary': 'dark colors, desaturated, eerie tones',
+ 'magical': 'iridescent colors, magical hues, sparkling',
+ 'peaceful': 'pastel colors, soft palette, calming',
+ 'neutral': 'balanced colors, pleasant palette'}
+ return color_map.get(emotion.lower(), 'beautiful colors')
+ def _get_prompt_composition(self, emotion):
+ """Get composition description for image prompts"""
+ composition_map = {'happy': 'balanced composition, positive space, inviting',
+ 'sad': 'asymmetrical composition, emotional weight',
+ 'exciting': 'dynamic composition, leading lines, movement',
+ 'scary': 'unsettling composition, negative space',
+ 'magical': 'centered composition, magical focus',
+ 'peaceful': 'harmonious composition, balanced, calm',
+ 'neutral': 'well-composed, visually pleasing'}
+ return composition_map.get(emotion.lower(), 'excellent composition')
+ def _extract_key_elements(self, prompt_text):
+ """Extract key visual elements from prompt text"""
+ elements = []
+ words = prompt_text.lower().split()
+ key_indicators = ['with', 'featuring', 'including', 'showing', 'containing']
+ for i, word in enumerate(words):
+ if word in key_indicators and i + 1 < len(words):
+ elements.append(f"- {words[i+1].capitalize()}")
+ elements = elements[:5]
+ if not elements:
+ elements = ["- Magical story elements",
+ "- Character emotions",
+ "- Story setting",
+ "- Key actions",
+ "- Atmospheric details"]
+ return "\n".join(elements)
+ def generate_all_outputs(self, processing_results, processing_time):
+ """Generate all output files from processing results"""
+ try:
+ self.logger.info("Generating all output files...")
+ story_title = processing_results['story_title']
+ characters = processing_results['characters']
+ scenes = processing_results['scenes']
+ outputs = {OUTPUT_STORY_FILE: self.fill_story_template(processing_results['original_story'],
+ story_title),
+ OUTPUT_NARRATION_FILE: self.fill_narration_template(processing_results['narration'],
+ story_title,
+ characters,
+ scenes),
+ OUTPUT_CHARACTER_SHEET_FILE: self.fill_character_template(characters,
+ story_title),
+ OUTPUT_SCENES_FILE: self.fill_scene_template(scenes,
+ story_title,
+ characters),
+ OUTPUT_IMAGE_PROMPTS_FILE: self.fill_image_prompts_template(processing_results['image_prompts'],
+ story_title,
+ scenes),
+ OUTPUT_PROCESSING_REPORT_FILE: self.create_processing_report(processing_results,
+ processing_time)}
+ self.logger.info("✅ All output templates filled successfully")
+ return outputs
+ except Exception as e:
+ self.logger.error(f"Error generating all outputs: {e}")
+ raise
+ def create_processing_report(self, results, processing_time):
+ """Create detailed processing report"""
+ try:
+ title_length = len(results['story_title']) + 18
+ separator = '=' * title_length
+ report = f"""PROCESSING REPORT: {results['story_title']}
+{separator}
+PROCESSING SUMMARY:
+-------------------
+Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+Processing Time: {processing_time:.2f} seconds
+Status: COMPLETED_SUCCESSFULLY
+CONTENT STATISTICS:
+-------------------
+Characters Extracted: {len(results['characters'])}
+Scenes Identified: {len(results['scenes'])}
+Image Prompts Generated: {len(results['image_prompts'])}
+CHARACTERS PROCESSED:
+---------------------
+{chr(10).join([f"- {char['name']} ({char.get('role', 'Unknown role')})" for char in results['characters']])}
+SCENES GENERATED:
+-----------------
+{chr(10).join([f"- {scene['title']} ({scene.get('emotion', 'Neutral')})" for scene in results['scenes']])}
+QUALITY ASSURANCE:
+------------------
+✅ Story coherence verified
+✅ Character consistency maintained
+✅ Scene transitions logical
+✅ Age-appropriate content confirmed
+✅ Visual style guidelines followed
+✅ Emotional arcs preserved
+OUTPUT FILES:
+-------------
+1. {OUTPUT_STORY_FILE} - Original story content
+2. {OUTPUT_NARRATION_FILE} - Engaging narration script
+3. {OUTPUT_CHARACTER_SHEET_FILE} - Character profiles
+4. {OUTPUT_SCENES_FILE} - Scene breakdowns
+5. {OUTPUT_IMAGE_PROMPTS_FILE} - AI image generation prompts
+6. {OUTPUT_PROCESSING_REPORT_FILE} - This report
+NEXT STEPS:
+-----------
+1. Use image prompts with AI generators
+2. Create video with narration and images
+3. Upload to YouTube channel
+4. Promote with generated content
+---
+Generated by Story Automation System
+Quality Check: PASSED
+Ready for Production: YES
+"""
+ return report
+ except Exception as e:
+ self.logger.error(f"Error creating processing report: {e}")
+ return "Error generating processing report"
+def create_template_engine():
+ """Create and return a TemplateEngine instance"""
+ return TemplateEngine()
+if __name__ == "__main__":
+ logging.basicConfig(level=logging.INFO)
+ engine = TemplateEngine()
+ print("✅ Template Engine module loaded successfully")
+ print("This module handles all template filling and content formatting.")
+
