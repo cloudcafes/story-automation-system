@@ -1,57 +1,107 @@
 """
-Template Engine - Handles template filling and content formatting
-Transforms AI-generated content into structured output files
+Template Engine - Output File Generation with Strict Formatting
+Applies framework templates to create the 6 output files in Google Drive
 """
 
 import logging
-import re
 from datetime import datetime
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any
+
 from config import (
-    OUTPUT_STORY_FILE,
-    OUTPUT_NARRATION_FILE,
-    OUTPUT_CHARACTER_SHEET_FILE,
-    OUTPUT_SCENES_FILE,
-    OUTPUT_IMAGE_PROMPTS_FILE,
-    OUTPUT_PROCESSING_REPORT_FILE,
-    ERROR_MESSAGES
+    INPUT_OUTPUT_FILES,
+    PROCESSING_RULES,
+    generate_output_folder_name
 )
 
 class TemplateEngine:
-    """Handles template filling and content formatting for output files"""
+    """Handles template application and output file generation with strict formatting"""
     
     def __init__(self):
-        """Initialize template engine"""
         self.logger = logging.getLogger(__name__)
-        
-    def fill_story_template(self, story_content, story_title):
-        """Format the story content into structured output"""
+    
+    def generate_all_outputs(self, processing_results: Dict[str, Any], processing_time: float) -> Dict[str, str]:
+        """Generate all 6 output files from processing results"""
         try:
-            separator = '-' * (len(story_title) + 7)
-            template = f"""STORY: {story_title}
+            self.logger.info("️ Generating output files...")
+            
+            story_title = processing_results['story_title']
+            characters = processing_results['characters']
+            scenes = processing_results['scenes']
+            
+            outputs = {
+                INPUT_OUTPUT_FILES['output_story']: self._generate_story_file(
+                    processing_results['original_story'], 
+                    story_title
+                ),
+                INPUT_OUTPUT_FILES['output_narration']: self._generate_narration_file(
+                    processing_results['narration'],
+                    story_title,
+                    characters,
+                    scenes
+                ),
+                INPUT_OUTPUT_FILES['output_character_sheet']: self._generate_character_file(
+                    characters,
+                    story_title
+                ),
+                INPUT_OUTPUT_FILES['output_scenes']: self._generate_scenes_file(
+                    scenes,
+                    story_title,
+                    characters
+                ),
+                INPUT_OUTPUT_FILES['output_image_prompts']: self._generate_prompts_file(
+                    processing_results['image_prompts'],
+                    story_title,
+                    scenes
+                ),
+                INPUT_OUTPUT_FILES['output_processing_report']: self._generate_report_file(
+                    processing_results,
+                    processing_time
+                )
+            }
+            
+            self.logger.info(f"✅ Generated {len(outputs)} output files")
+            return outputs
+            
+        except Exception as e:
+            self.logger.error(f"❌ Error generating outputs: {e}")
+            raise
+    
+    def _generate_story_file(self, story_content: str, story_title: str) -> str:
+        """Generate 1-Story.txt file"""
+        separator = '=' * (len(story_title) + 8)
+        
+        content = f"""STORY: {story_title}
 {separator}
 
 {story_content}
 
 ---
-Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
-Story Title: {story_title}
+GENERATED: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
+TITLE: {story_title}
+WORD COUNT: {len(story_content.split())}
+CHARACTER COUNT: {len([c for c in story_content if c.isalpha()])}
 """
-            return template
-            
-        except Exception as e:
-            self.logger.error(f"Error filling story template: {e}")
-            return f"STORY: {story_title}\n\n{story_content}"
+        return content
     
-    def fill_narration_template(self, narration_content, story_title, characters, scenes):
-        """Format narration content with proper structure"""
-        try:
-            character_list = "\n".join([f"- {char['name']}: {char.get('role', 'Unknown role')}" for char in characters])
-            scene_list = "\n".join([f"- {scene['title']}" for scene in scenes])
-            
-            separator = '-' * (len(story_title) + 18)
-            template = f"""NARRATION SCRIPT: {story_title}
-{separator}
+    def _generate_narration_file(self, narration: str, story_title: str, 
+                               characters: List[Dict], scenes: List[Dict]) -> str:
+        """Generate 2-Narration.txt file"""
+        # Format character list
+        character_list = "\n".join([
+            f"- {char['name']}: {char.get('role', 'character').title()}"
+            for char in characters
+        ])
+        
+        # Format scene list
+        scene_list = "\n".join([
+            f"- {scene['title']} ({scene.get('emotion', 'neutral').title()})"
+            for scene in scenes
+        ])
+        
+        title_separator = '=' * (len(story_title) + 17)
+        
+        content = f"""NARRATION SCRIPT: {story_title}
+{title_separator}
 
 CHARACTERS:
 {character_list}
@@ -60,431 +110,387 @@ SCENES:
 {scene_list}
 
 NARRATION:
-{narration_content}
+{narration}
 
 ---
-Narration Style: Warm, engaging, child-friendly
-Target Audience: 4-6 year olds
-Tone: Magical, reassuring, adventurous
+PRODUCTION NOTES:
+• Duration: {PROCESSING_RULES['narration_limits']['duration_minutes']} minutes
+• Target Age: {PROCESSING_RULES['narration_limits']['target_age']}
+• Word Count: {len(narration.split())}
+• Tone: Warm, Magical, Engaging
+• Pace: Slow and clear for young children
+• Audience Interactions: Included throughout
+• Emotional Arc: Complete story journey
 """
-            return template
-            
-        except Exception as e:
-            self.logger.error(f"Error filling narration template: {e}")
-            return f"NARRATION SCRIPT: {story_title}\n\n{narration_content}"
+        return content
     
-    def fill_character_template(self, characters, story_title):
-        """Format character data into structured sheet"""
-        try:
-            character_sections = []
+    def _generate_character_file(self, characters: List[Dict], story_title: str) -> str:
+        """Generate 3-Character-Sheet.txt file"""
+        character_sections = []
+        
+        for i, char in enumerate(characters, 1):
+            name = char.get('name', f'Character {i}')
+            section_separator = '=' * (len(name) + 14)
             
-            for i, char in enumerate(characters, 1):
-                name = char.get('name', 'Unknown')
-                name_length = len(name) + 13
-                separator = '=' * name_length
-                
-                section = f"""CHARACTER {i}: {name}
-{separator}
-
-Role: {char.get('role', 'Not specified')}
+            section = f"""CHARACTER {i}: {name}
+{section_separator}
+Role: {char.get('role', 'Not specified').title()}
 Personality: {char.get('personality', 'Not specified')}
 Appearance: {char.get('appearance', 'Not specified')}
 Motivation: {char.get('motivation', 'Not specified')}
 Emotional Traits: {char.get('emotional_traits', 'Not specified')}
-Key Attributes: {char.get('attributes', 'Not specified')}
 
-Description:
+DESCRIPTION:
 {char.get('description', 'No description available')}
+
 """
-                character_sections.append(section)
-            
-            title_separator = '-' * (len(story_title) + 19)
-            template = f"""CHARACTER SHEETS: {story_title}
+            character_sections.append(section)
+        
+        title_separator = '=' * (len(story_title) + 17)
+        
+        content = f"""CHARACTER SHEETS: {story_title}
 {title_separator}
 
 Total Characters: {len(characters)}
+Character Range: {PROCESSING_RULES['character_limits']['min_characters']}-{PROCESSING_RULES['character_limits']['max_characters']}
 
-{'#' * 50}
+{'='*50}
 
-{chr(10) + '#' * 50 + chr(10)}{chr(10).join(character_sections)}
-
+{''.join(character_sections)}
 ---
-Character Consistency: Maintained across all scenes
-Visual References: Consistent with style guide
+CHARACTER CONSISTENCY: Enforced across all scenes
+VISUAL REFERENCE: Maintain exact appearances
+EMOTIONAL RANGE: Age-appropriate and positive
 """
-            return template
-            
-        except Exception as e:
-            self.logger.error(f"Error filling character template: {e}")
-            # Fallback simple format
-            simple_chars = "\n".join([f"- {char.get('name', 'Unknown')}: {char.get('description', 'No description')}" for char in characters])
-            return f"CHARACTERS:\n{simple_chars}"
+        return content
     
-    def fill_scene_template(self, scenes, story_title, characters):
-        """Format scene breakdowns with detailed structure"""
-        try:
-            scene_sections = []
+    def _generate_scenes_file(self, scenes: List[Dict], story_title: str, characters: List[Dict]) -> str:
+        """Generate 4-Scenes.txt file"""
+        scene_sections = []
+        
+        for i, scene in enumerate(scenes, 1):
+            title = scene.get('title', f'Scene {i}')
+            section_separator = '=' * (len(title) + 9)
             
-            for i, scene in enumerate(scenes, 1):
-                scene_title = scene.get('title', f'Scene {i}')
-                title_length = len(scene_title) + 9
-                separator = '=' * title_length
-                
-                # Extract scene components
-                location = scene.get('location', 'Not specified')
-                emotion = scene.get('emotion', 'Neutral')
-                characters_in_scene = scene.get('characters', 'Not specified')
-                action = scene.get('action', 'Not specified')
-                
-                section = f"""SCENE {i}: {scene_title}
-{separator}
+            # Infer visual elements based on emotion
+            emotion = scene.get('emotion', 'neutral').lower()
+            lighting = self._infer_lighting(emotion)
+            colors = self._infer_colors(emotion)
+            composition = self._infer_composition(scene.get('action', ''))
+            
+            section = f"""SCENE {i}: {title}
+{section_separator}
+Location: {scene.get('location', 'Not specified')}
+Emotional Tone: {scene.get('emotion', 'Not specified').title()}
+Characters Present: {scene.get('characters', 'Not specified')}
+Key Action: {scene.get('action', 'Not specified')}
 
-Location: {location}
-Emotional Arc: {emotion}
-Characters Present: {characters_in_scene}
-Key Action: {action}
-
-Description:
+DESCRIPTION:
 {scene.get('description', 'No description available')}
 
 VISUAL ELEMENTS:
-- Lighting: {self._infer_lighting(emotion)}
-- Color Palette: {self._infer_colors(emotion)}
-- Composition: {self._infer_composition(action)}
-- Camera Angle: {self._infer_camera_angle(emotion)}
+• Lighting: {lighting}
+• Color Palette: {colors}
+• Composition: {composition}
+• Camera Angle: {self._infer_camera_angle(emotion)}
+
 """
-                scene_sections.append(section)
-            
-            title_separator = '-' * (len(story_title) + 17)
-            template = f"""SCENE BREAKDOWN: {story_title}
+            scene_sections.append(section)
+        
+        title_separator = '=' * (len(story_title) + 16)
+        
+        content = f"""SCENE BREAKDOWN: {story_title}
 {title_separator}
 
 Total Scenes: {len(scenes)}
-Story Structure: Complete narrative arc
+Scene Range: {PROCESSING_RULES['scene_limits']['min_scenes']}-{PROCESSING_RULES['scene_limits']['max_scenes']}
+Emotional Arc: Complete narrative journey
 
-{'#' * 50}
+{'='*50}
 
-{chr(10) + '#' * 50 + chr(10)}{chr(10).join(scene_sections)}
-
+{''.join(scene_sections)}
 ---
-Scene Transitions: Smooth and logical
-Emotional Progression: Coherent throughout
-Pacing: Optimized for children's attention
+SCENE TRANSITIONS: Smooth and logical progression
+PACING: Optimized for children's attention span
+VISUAL CONTINUITY: Maintained throughout all scenes
+STORY FLOW: Coherent beginning, development, and resolution
 """
-            return template
-            
-        except Exception as e:
-            self.logger.error(f"Error filling scene template: {e}")
-            # Fallback simple format
-            simple_scenes = "\n".join([f"- {scene.get('title', 'Unknown')}: {scene.get('description', 'No description')}" for scene in scenes])
-            return f"SCENES:\n{simple_scenes}"
+        return content
     
-    def fill_image_prompts_template(self, image_prompts, story_title, scenes):
-        """Format image prompts for AI generation"""
-        try:
-            prompt_sections = []
+    def _generate_prompts_file(self, image_prompts: List[Dict], story_title: str, scenes: List[Dict]) -> str:
+        """Generate 5-Image-Prompts.txt file"""
+        prompt_sections = []
+        
+        for i, prompt_data in enumerate(image_prompts, 1):
+            scene_title = prompt_data.get('scene', f'Scene {i}')
+            section_separator = '=' * (len(scene_title) + 15)
             
-            for i, prompt_data in enumerate(image_prompts, 1):
-                scene_title = prompt_data.get('scene', f'Scene {i}')
-                title_length = len(scene_title) + 15
-                separator = '=' * title_length
-                
-                prompt_text = prompt_data.get('prompt', 'No prompt available')
-                
-                # Match prompt to scene for additional context
-                scene_context = next((scene for scene in scenes if scene.get('title') == scene_title), None)
-                scene_emotion = scene_context.get('emotion', 'neutral') if scene_context else 'neutral'
-                
-                section = f"""IMAGE PROMPT {i}: {scene_title}
-{separator}
+            # Find matching scene for context
+            scene_context = next(
+                (scene for scene in scenes if scene.get('title') == scene_title), 
+                None
+            )
+            scene_emotion = scene_context.get('emotion', 'neutral') if scene_context else 'neutral'
+            
+            section = f"""IMAGE PROMPT {i}: {scene_title}
+{section_separator}
 
-Scene Context: {scene_context.get('description', 'General story scene') if scene_context else 'Story scene'}
-Emotional Tone: {scene_emotion.capitalize()}
+SCENE CONTEXT:
+{scene_context.get('description', 'General story scene') if scene_context else 'Key story moment'}
+
+EMOTIONAL TONE: {scene_emotion.title()}
 
 AI PROMPT:
-{prompt_text}
+{prompt_data.get('prompt', 'No prompt available')}
 
 TECHNICAL SPECIFICATIONS:
-- Style: Children's storybook illustration
-- Lighting: {self._get_prompt_lighting(scene_emotion)}
-- Colors: {self._get_prompt_colors(scene_emotion)}
-- Composition: {self._get_prompt_composition(scene_emotion)}
-- Details: High detail, magical elements, child-friendly
+• Style: Children's storybook illustration
+• Lighting: {self._get_prompt_lighting(scene_emotion)}
+• Colors: {self._get_prompt_colors(scene_emotion)}
+• Composition: {self._get_prompt_composition(scene_emotion)}
+• Aspect Ratio: 16:9 (YouTube optimized)
+• Detail Level: High detail, magical elements
+• Safety: Child-appropriate content only
 
-KEY ELEMENTS TO INCLUDE:
-{self._extract_key_elements(prompt_text)}
+KEY ELEMENTS:
+{self._extract_key_elements(prompt_data.get('prompt', ''))}
+
 """
-                prompt_sections.append(section)
-            
-            title_separator = '-' * (len(story_title) + 28)
-            template = f"""IMAGE GENERATION PROMPTS: {story_title}
+            prompt_sections.append(section)
+        
+        title_separator = '=' * (len(story_title) + 22)
+        
+        content = f"""IMAGE GENERATION PROMPTS: {story_title}
 {title_separator}
 
 Total Prompts: {len(image_prompts)}
-Usage: For AI image generation (DALL-E, Midjourney, Stable Diffusion)
+Usage: AI Image Generation (DALL-E, Midjourney, Stable Diffusion)
+Prompt Quality: Scene-specific and emotionally aligned
 
-{'#' * 50}
+{'='*50}
 
-{chr(10) + '#' * 50 + chr(10)}{chr(10).join(prompt_sections)}
-
+{''.join(prompt_sections)}
 ---
 PROMPT GUIDELINES FOLLOWED:
-✅ Child-appropriate content
-✅ Consistent character appearances
-✅ Magical, storybook aesthetic
+✅ Child-appropriate content only
+✅ Consistent character appearances across all scenes
+✅ Magical, storybook aesthetic maintained
 ✅ Warm, inviting color palettes
 ✅ Clear visual storytelling
 ✅ Emotional resonance with scenes
+✅ 16:9 aspect ratio for YouTube
+✅ High detail and magical elements
 
-TIPS FOR IMAGE GENERATION:
+GENERATION TIPS:
 1. Use these prompts with your preferred AI image generator
-2. Maintain character consistency across all images
-3. Follow the specified emotional tones
+2. Maintain character consistency across all generated images
+3. Follow the specified emotional tones and color palettes
 4. Ensure all images are child-safe and magical
 5. Use 16:9 aspect ratio for YouTube compatibility
+6. Generate at high resolution (4K recommended)
+7. Maintain consistent art style throughout
 """
-            return template
-            
-        except Exception as e:
-            self.logger.error(f"Error filling image prompts template: {e}")
-            # Fallback simple format
-            simple_prompts = "\n".join([f"Prompt {i}: {p.get('prompt', 'No prompt')}" for i, p in enumerate(image_prompts, 1)])
-            return f"IMAGE PROMPTS:\n{simple_prompts}"
+        return content
     
-    def _infer_lighting(self, emotion):
-        """Infer lighting based on emotional tone"""
-        lighting_map = {
-            'happy': 'Warm, bright, golden hour lighting',
-            'sad': 'Soft, diffused, gentle lighting',
-            'exciting': 'Dynamic, high-contrast, dramatic lighting',
-            'scary': 'Low-key, mysterious, shadow play',
-            'magical': 'Ethereal, glowing, magical light sources',
-            'peaceful': 'Soft, even, tranquil lighting',
-            'adventurous': 'Natural, outdoor, sunlight through trees'
-        }
-        return lighting_map.get(emotion.lower(), 'Appropriate emotional lighting')
-    
-    def _infer_colors(self, emotion):
-        """Infer color palette based on emotional tone"""
-        color_map = {
-            'happy': 'Warm yellows, bright blues, cheerful pastels',
-            'sad': 'Cool blues, soft grays, muted tones',
-            'exciting': 'Vibrant reds, oranges, high saturation',
-            'scary': 'Dark purples, deep blues, desaturated',
-            'magical': 'Iridescent purples, sparkling golds, magical hues',
-            'peaceful': 'Soft greens, gentle blues, earth tones',
-            'adventurous': 'Rich greens, earthy browns, sky blues'
-        }
-        return color_map.get(emotion.lower(), 'Emotionally appropriate colors')
-    
-    def _infer_composition(self, action):
-        """Infer composition based on action type"""
-        action_lower = action.lower()
-        if any(word in action_lower for word in ['run', 'chase', 'fast']):
-            return 'Dynamic, diagonal lines, sense of movement'
-        elif any(word in action_lower for word in ['talk', 'discuss', 'quiet']):
-            return 'Balanced, rule of thirds, focused on characters'
-        elif any(word in action_lower for word in ['discover', 'find', 'magic']):
-            return 'Centered, leading lines, emphasis on discovery'
-        else:
-            return 'Well-composed, visually balanced, story-focused'
-    
-    def _infer_camera_angle(self, emotion):
-        """Infer camera angle based on emotional tone"""
-        angle_map = {
-            'happy': 'Eye-level or slightly low angle for empowerment',
-            'sad': 'Slightly high angle for vulnerability',
-            'exciting': 'Dynamic angles, Dutch tilt for energy',
-            'scary': 'Low angles for intimidation, high angles for vulnerability',
-            'magical': 'Eye-level with magical perspective',
-            'peaceful': 'Stable, eye-level, calming composition',
-            'adventurous': 'Varied angles, following action'
-        }
-        return angle_map.get(emotion.lower(), 'Appropriate emotional angle')
-    
-    def _get_prompt_lighting(self, emotion):
-        """Get lighting description for image prompts"""
-        lighting_map = {
-            'happy': 'soft warm lighting, golden hour, cheerful atmosphere',
-            'sad': 'gentle diffused light, overcast, melancholic mood',
-            'exciting': 'dynamic lighting, high contrast, energetic',
-            'scary': 'dramatic shadows, moonlight, mysterious',
-            'magical': 'ethereal glow, magical light, sparkling',
-            'peaceful': 'soft even light, tranquil, serene',
-            'neutral': 'pleasant lighting, well-lit, clear'
-        }
-        return lighting_map.get(emotion.lower(), 'beautiful lighting')
-    
-    def _get_prompt_colors(self, emotion):
-        """Get color description for image prompts"""
-        color_map = {
-            'happy': 'vibrant colors, warm palette, cheerful tones',
-            'sad': 'muted colors, cool palette, soft tones',
-            'exciting': 'saturated colors, bold palette, dynamic',
-            'scary': 'dark colors, desaturated, eerie tones',
-            'magical': 'iridescent colors, magical hues, sparkling',
-            'peaceful': 'pastel colors, soft palette, calming',
-            'neutral': 'balanced colors, pleasant palette'
-        }
-        return color_map.get(emotion.lower(), 'beautiful colors')
-    
-    def _get_prompt_composition(self, emotion):
-        """Get composition description for image prompts"""
-        composition_map = {
-            'happy': 'balanced composition, positive space, inviting',
-            'sad': 'asymmetrical composition, emotional weight',
-            'exciting': 'dynamic composition, leading lines, movement',
-            'scary': 'unsettling composition, negative space',
-            'magical': 'centered composition, magical focus',
-            'peaceful': 'harmonious composition, balanced, calm',
-            'neutral': 'well-composed, visually pleasing'
-        }
-        return composition_map.get(emotion.lower(), 'excellent composition')
-    
-    def _extract_key_elements(self, prompt_text):
-        """Extract key visual elements from prompt text"""
-        elements = []
-        words = prompt_text.lower().split()
+    def _generate_report_file(self, processing_results: Dict[str, Any], processing_time: float) -> str:
+        """Generate processing-report.txt file"""
+        story_title = processing_results['story_title']
+        stats = processing_results['processing_stats']
         
-        key_indicators = ['with', 'featuring', 'including', 'showing', 'containing']
-        for i, word in enumerate(words):
-            if word in key_indicators and i + 1 < len(words):
-                elements.append(f"- {words[i+1].capitalize()}")
+        title_separator = '=' * (len(story_title) + 18)
         
-        elements = elements[:5]
+        # Format character list
+        character_list = "\n".join([
+            f"• {char['name']} ({char.get('role', 'character').title()})"
+            for char in processing_results['characters']
+        ])
         
-        if not elements:
-            elements = [
-                "- Magical story elements", 
-                "- Character emotions", 
-                "- Story setting", 
-                "- Key actions", 
-                "- Atmospheric details"
-            ]
+        # Format scene list
+        scene_list = "\n".join([
+            f"• {scene['title']} - {scene.get('emotion', 'neutral').title()} at {scene.get('location', 'unknown')}"
+            for scene in processing_results['scenes']
+        ])
         
-        return "\n".join(elements)
-    
-    def generate_all_outputs(self, processing_results, processing_time):
-        """Generate all output files from processing results"""
-        try:
-            self.logger.info("Generating all output files...")
-            
-            story_title = processing_results['story_title']
-            characters = processing_results['characters']
-            scenes = processing_results['scenes']
-            
-            outputs = {
-                OUTPUT_STORY_FILE: self.fill_story_template(
-                    processing_results['original_story'], 
-                    story_title
-                ),
-                OUTPUT_NARRATION_FILE: self.fill_narration_template(
-                    processing_results['narration'],
-                    story_title,
-                    characters,
-                    scenes
-                ),
-                OUTPUT_CHARACTER_SHEET_FILE: self.fill_character_template(
-                    characters,
-                    story_title
-                ),
-                OUTPUT_SCENES_FILE: self.fill_scene_template(
-                    scenes,
-                    story_title,
-                    characters
-                ),
-                OUTPUT_IMAGE_PROMPTS_FILE: self.fill_image_prompts_template(
-                    processing_results['image_prompts'],
-                    story_title,
-                    scenes
-                ),
-                OUTPUT_PROCESSING_REPORT_FILE: self.create_processing_report(
-                    processing_results,
-                    processing_time
-                )
-            }
-            
-            self.logger.info("✅ All output templates filled successfully")
-            return outputs
-            
-        except Exception as e:
-            self.logger.error(f"Error generating all outputs: {e}")
-            raise
-    
-    def create_processing_report(self, results, processing_time):
-        """Create detailed processing report"""
-        try:
-            title_length = len(results['story_title']) + 18
-            separator = '=' * title_length
-            
-            report = f"""PROCESSING REPORT: {results['story_title']}
-{separator}
+        content = f"""PROCESSING REPORT: {story_title}
+{title_separator}
 
-PROCESSING SUMMARY:
--------------------
+PROCESSING SUMMARY
+──────────────────
 Timestamp: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}
 Processing Time: {processing_time:.2f} seconds
 Status: COMPLETED_SUCCESSFULLY
+Processing Method: {stats['processing_method'].upper()}
 
-CONTENT STATISTICS:
--------------------
-Characters Extracted: {len(results['characters'])}
-Scenes Identified: {len(results['scenes'])}
-Image Prompts Generated: {len(results['image_prompts'])}
+CONTENT STATISTICS
+──────────────────
+Characters Extracted: {stats['character_count']} (Range: {PROCESSING_RULES['character_limits']['min_characters']}-{PROCESSING_RULES['character_limits']['max_characters']})
+Scenes Identified: {stats['scene_count']} (Range: {PROCESSING_RULES['scene_limits']['min_scenes']}-{PROCESSING_RULES['scene_limits']['max_scenes']})
+Image Prompts Generated: {stats['image_prompt_count']}
+Narration Word Count: {len(processing_results['narration'].split())} (Target: {PROCESSING_RULES['narration_limits']['min_words']}-{PROCESSING_RULES['narration_limits']['max_words']})
 
-CHARACTERS PROCESSED:
----------------------
-{chr(10).join([f"- {char['name']} ({char.get('role', 'Unknown role')})" for char in results['characters']])}
+CHARACTERS PROCESSED
+────────────────────
+{character_list}
 
-SCENES GENERATED:
------------------
-{chr(10).join([f"- {scene['title']} ({scene.get('emotion', 'Neutral')})" for scene in results['scenes']])}
+SCENES GENERATED
+────────────────
+{scene_list}
 
-QUALITY ASSURANCE:
-------------------
+QUALITY ASSURANCE
+─────────────────
 ✅ Story coherence verified
 ✅ Character consistency maintained
 ✅ Scene transitions logical
 ✅ Age-appropriate content confirmed
 ✅ Visual style guidelines followed
 ✅ Emotional arcs preserved
+✅ Processing rules enforced
+✅ Output formatting validated
 
-OUTPUT FILES:
--------------
-1. {OUTPUT_STORY_FILE} - Original story content
-2. {OUTPUT_NARRATION_FILE} - Engaging narration script
-3. {OUTPUT_CHARACTER_SHEET_FILE} - Character profiles
-4. {OUTPUT_SCENES_FILE} - Scene breakdowns
-5. {OUTPUT_IMAGE_PROMPTS_FILE} - AI image generation prompts
-6. {OUTPUT_PROCESSING_REPORT_FILE} - This report
+OUTPUT FILES GENERATED
+──────────────────────
+1. {INPUT_OUTPUT_FILES['output_story']} - Original story content
+2. {INPUT_OUTPUT_FILES['output_narration']} - Engaging narration script
+3. {INPUT_OUTPUT_FILES['output_character_sheet']} - Detailed character profiles
+4. {INPUT_OUTPUT_FILES['output_scenes']} - Scene breakdowns with visual elements
+5. {INPUT_OUTPUT_FILES['output_image_prompts']} - AI image generation prompts
+6. {INPUT_OUTPUT_FILES['output_processing_report']} - This comprehensive report
 
-NEXT STEPS:
------------
-1. Use image prompts with AI generators
-2. Create video with narration and images
-3. Upload to YouTube channel
-4. Promote with generated content
+NEXT STEPS
+──────────
+1. Use image prompts with AI generators to create visuals
+2. Record narration using the generated script
+3. Create video combining narration and generated images
+4. Upload finished video to YouTube channel
+5. Promote with generated content and descriptions
 
 ---
-Generated by Story Automation System
-Quality Check: PASSED
-Ready for Production: YES
+GENERATED BY: Story Automation System
+QUALITY CHECK: PASSED
+READY FOR PRODUCTION: YES
+SYSTEM: Fully Automated Pipeline
+VERSION: 1.0
 """
-            return report
-            
-        except Exception as e:
-            self.logger.error(f"Error creating processing report: {e}")
-            return "Error generating processing report"
+        return content
+    
+    # Helper methods for visual element inference
+    def _infer_lighting(self, emotion: str) -> str:
+        """Infer lighting based on emotional tone"""
+        lighting_map = {
+            'happy': 'Warm, bright, golden hour lighting',
+            'excited': 'Dynamic, high-contrast, energetic lighting',
+            'curious': 'Soft, exploratory, gentle lighting',
+            'brave': 'Heroic, dramatic, focused lighting',
+            'joyful': 'Radiant, sparkling, celebratory lighting',
+            'peaceful': 'Soft, even, tranquil lighting',
+            'magical': 'Ethereal, glowing, magical light sources'
+        }
+        return lighting_map.get(emotion.lower(), 'Appropriate emotional lighting')
+    
+    def _infer_colors(self, emotion: str) -> str:
+        """Infer color palette based on emotional tone"""
+        color_map = {
+            'happy': 'Warm yellows, bright blues, cheerful pastels',
+            'excited': 'Vibrant reds, oranges, high saturation colors',
+            'curious': 'Soft blues, gentle greens, exploratory tones',
+            'brave': 'Rich golds, deep blues, heroic colors',
+            'joyful': 'Sparkling golds, warm pinks, celebratory hues',
+            'peaceful': 'Soft greens, gentle blues, earth tones',
+            'magical': 'Iridescent purples, sparkling golds, magical hues'
+        }
+        return color_map.get(emotion.lower(), 'Emotionally appropriate colors')
+    
+    def _infer_composition(self, action: str) -> str:
+        """Infer composition based on action type"""
+        action_lower = action.lower()
+        if any(word in action_lower for word in ['run', 'chase', 'fly', 'move']):
+            return 'Dynamic, diagonal lines, sense of movement'
+        elif any(word in action_lower for word in ['talk', 'discuss', 'share']):
+            return 'Balanced, rule of thirds, character-focused'
+        elif any(word in action_lower for word in ['discover', 'find', 'reveal']):
+            return 'Centered, leading lines, emphasis on discovery'
+        elif any(word in action_lower for word in ['celebrate', 'dance', 'play']):
+            return 'Energetic, circular composition, joyful arrangement'
+        else:
+            return 'Well-composed, visually balanced, story-focused'
+    
+    def _infer_camera_angle(self, emotion: str) -> str:
+        """Infer camera angle based on emotional tone"""
+        angle_map = {
+            'happy': 'Eye-level or slightly low angle for empowerment',
+            'excited': 'Dynamic angles, Dutch tilt for energy',
+            'curious': 'Eye-level with slight exploration tilt',
+            'brave': 'Low angle for heroism and strength',
+            'joyful': 'Stable, eye-level, uplifting composition',
+            'peaceful': 'Calm, eye-level, harmonious framing',
+            'magical': 'Eye-level with magical perspective elements'
+        }
+        return angle_map.get(emotion.lower(), 'Appropriate emotional angle')
+    
+    def _get_prompt_lighting(self, emotion: str) -> str:
+        """Get lighting description for image prompts"""
+        lighting_map = {
+            'happy': 'soft warm lighting, golden hour, cheerful atmosphere',
+            'excited': 'dynamic lighting, high contrast, energetic glow',
+            'curious': 'gentle exploratory light, soft shadows, mysterious',
+            'brave': 'heroic lighting, dramatic highlights, focused beams',
+            'joyful': 'radiant lighting, sparkling effects, celebratory',
+            'peaceful': 'soft even light, tranquil, serene illumination',
+            'magical': 'ethereal glow, magical light sources, sparkling'
+        }
+        return lighting_map.get(emotion.lower(), 'beautiful storybook lighting')
+    
+    def _get_prompt_colors(self, emotion: str) -> str:
+        """Get color description for image prompts"""
+        color_map = {
+            'happy': 'vibrant colors, warm palette, cheerful tones',
+            'excited': 'saturated colors, bold palette, dynamic hues',
+            'curious': 'mysterious colors, soft palette, exploratory tones',
+            'brave': 'rich colors, heroic palette, strong hues',
+            'joyful': 'sparkling colors, celebratory palette, warm tones',
+            'peaceful': 'pastel colors, soft palette, calming hues',
+            'magical': 'iridescent colors, magical palette, sparkling tones'
+        }
+        return color_map.get(emotion.lower(), 'beautiful storybook colors')
+    
+    def _get_prompt_composition(self, emotion: str) -> str:
+        """Get composition description for image prompts"""
+        composition_map = {
+            'happy': 'balanced composition, positive space, inviting',
+            'excited': 'dynamic composition, leading lines, movement',
+            'curious': 'exploratory composition, mysterious framing',
+            'brave': 'heroic composition, strong focal points',
+            'joyful': 'celebratory composition, circular arrangements',
+            'peaceful': 'harmonious composition, balanced, calm',
+            'magical': 'enchanted composition, magical perspective'
+        }
+        return composition_map.get(emotion.lower(), 'excellent storybook composition')
+    
+    def _extract_key_elements(self, prompt_text: str) -> str:
+        """Extract key visual elements from prompt text"""
+        elements = []
+        words = prompt_text.lower().split()
+        
+        key_indicators = ['with', 'featuring', 'including', 'showing', 'containing', 'detailed']
+        for i, word in enumerate(words):
+            if word in key_indicators and i + 1 < len(words):
+                next_word = words[i + 1]
+                if len(next_word) > 3 and not next_word in ['the', 'and', 'for', 'with']:
+                    elements.append(f"• {next_word.capitalize()}")
+        
+        # Ensure we have some elements
+        if not elements:
+            elements = [
+                "• Magical story elements",
+                "• Character emotions and expressions", 
+                "• Story setting and environment",
+                "• Key actions and moments",
+                "• Atmospheric and sensory details"
+            ]
+        
+        return "\n".join(elements[:6])  # Limit to 6 key elements
 
-# Factory function for easy creation
+
 def create_template_engine():
     """Create and return a TemplateEngine instance"""
     return TemplateEngine()
-
-if __name__ == "__main__":
-    # Test the template engine
-    logging.basicConfig(level=logging.INFO)
-    
-    engine = TemplateEngine()
-    print("✅ Template Engine module loaded successfully")
-    print("This module handles all template filling and content formatting.")

@@ -1,85 +1,74 @@
 """
-Story Processor - SSL Verification Disabled
+Story Processor - AI-Powered Story Analysis and Content Generation
+Enforces strict processing rules and quality gates from config
 """
 
-import os
+import logging
 import time
 import json
-import datetime
-import requests
-import httpx
-import glob
-import logging
 import re
-import urllib3
-from typing import Dict, Any, List, Optional, Tuple
-from pathlib import Path
+from typing import Dict, List, Any, Optional
+import httpx
 from openai import OpenAI
 
 from config import (
-    DEEPSEEK_API_KEY,
-    DEEPSEEK_MODEL,
-    DEEPSEEK_MAX_TOKENS,
-    DEEPSEEK_TEMPERATURE,
-    DEEPSEEK_BASE_URL,
-    DEEPSEEK_VERIFY_SSL,
-    MAX_RETRIES,
-    RETRY_DELAY,
+    AI_CONFIG,
+    PROCESSING_RULES,
+    PARSING_RULES,
+    VALIDATION_RULES,
     ERROR_MESSAGES,
-    REQUIRED_INPUT_FILES
+    SYSTEM_SETTINGS
 )
 
-# Disable SSL warnings
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
 class NiftyAIAnalyzer:
-    def __init__(self, api_key: Optional[str] = None):
-        self.api_key = api_key or DEEPSEEK_API_KEY
+    """Handles AI analysis with DeepSeek API with strict format enforcement"""
+    
+    def __init__(self):
+        self.logger = logging.getLogger(__name__)
         self.client = None
-        self.history_file = "analysis_history.txt"
         self.is_available = False
         self.initialize_client()
-
-    def initialize_client(self) -> bool:
+    
+    def initialize_client(self):
         """Initialize DeepSeek API client with SSL disabled"""
         try:
-            if not self.api_key:
-                raise RuntimeError("DeepSeek API key not found.")
-
-            # SSL verification disabled
-            http_client = httpx.Client(verify=False, timeout=30.0)
+            if not AI_CONFIG['api_key']:
+                raise RuntimeError("DeepSeek API key not configured")
+            
+            # Create HTTP client with SSL disabled
+            http_client = httpx.Client(
+                verify=AI_CONFIG['verify_ssl'],
+                timeout=AI_CONFIG['timeout']
+            )
             
             self.client = OpenAI(
-                api_key=self.api_key,
-                base_url="https://api.deepseek.com",
-                http_client=http_client,
-                max_retries=2
+                api_key=AI_CONFIG['api_key'],
+                base_url=AI_CONFIG['base_url'],
+                http_client=http_client
             )
             
-            # Test connection
-            _ = self.client.chat.completions.create(
-                model="deepseek-chat",
+            # Test connection with simple request
+            test_response = self.client.chat.completions.create(
+                model=AI_CONFIG['model'],
                 messages=[{"role": "user", "content": "ping"}],
-                max_tokens=5,
-                temperature=0
+                max_tokens=5
             )
             
-            print("✅ DeepSeek AI client initialized (SSL disabled)")
             self.is_available = True
-            return True
+            self.logger.info("✅ DeepSeek AI client initialized successfully")
             
         except Exception as e:
-            print(f"❌ DeepSeek client failed: {e}")
+            self.logger.error(f"❌ DeepSeek client initialization failed: {e}")
             self.client = None
             self.is_available = False
-            return False
-
-    def analyze_with_retry(self, prompt: str, system_message: Optional[str] = None, max_tokens: Optional[int] = None) -> Optional[str]:
-        """Analyze with retry logic"""
+    
+    def analyze_with_retry(self, prompt: str, system_message: str = None) -> Optional[str]:
+        """Analyze with retry logic and format enforcement"""
         if not self.is_available or not self.client:
+            self.logger.error("AI client not available")
             return None
-            
-        for attempt in range(MAX_RETRIES):
+        
+        for attempt in range(SYSTEM_SETTINGS['max_retries']):
             try:
                 messages = []
                 if system_message:
@@ -87,46 +76,104 @@ class NiftyAIAnalyzer:
                 messages.append({"role": "user", "content": prompt})
                 
                 response = self.client.chat.completions.create(
-                    model="deepseek-chat",
+                    model=AI_CONFIG['model'],
                     messages=messages,
-                    max_tokens=max_tokens or DEEPSEEK_MAX_TOKENS,
-                    temperature=DEEPSEEK_TEMPERATURE
+                    max_tokens=AI_CONFIG['max_tokens'],
+                    temperature=AI_CONFIG['temperature']
                 )
                 
                 result = response.choices[0].message.content.strip()
-                self._log_analysis(prompt, result)
+                self.logger.info(f"✅ AI analysis completed (attempt {attempt + 1})")
                 return result
                 
             except Exception as e:
-                if attempt < MAX_RETRIES - 1:
-                    wait_time = RETRY_DELAY * (2 ** attempt)
-                    print(f"⚠️ API call failed, retrying in {wait_time}s: {e}")
+                if attempt < SYSTEM_SETTINGS['max_retries'] - 1:
+                    wait_time = SYSTEM_SETTINGS['retry_delay'] * (2 ** attempt)
+                    self.logger.warning(f" AI API call failed, retrying in {wait_time}s: {e}")
                     time.sleep(wait_time)
                     continue
                 else:
-                    print(f"❌ API call failed after {MAX_RETRIES} attempts: {e}")
+                    self.logger.error(f"❌ AI API call failed after {SYSTEM_SETTINGS['max_retries']} attempts: {e}")
                     return None
 
-    def _log_analysis(self, prompt: str, result: str):
-        """Log analysis history"""
-        try:
-            with open(self.history_file, "a", encoding="utf-8") as f:
-                f.write(f"\n{'='*50}\n")
-                f.write(f"Time: {datetime.datetime.now().isoformat()}\n")
-                f.write(f"Prompt: {prompt}\n")
-                f.write(f"Result: {result}\n")
-        except Exception as e:
-            print(f"⚠️ Failed to log analysis: {e}")
-
-# ... [rest of story_processor.py remains the same with OfflineFallbackProcessor and StoryProcessor] ...
-
-class OfflineFallbackProcessor:
-    """Offline fallback when DeepSeek is unavailable"""
+class StoryProcessor:
+    """Processes stories with strict rule enforcement and quality gates"""
     
-    def __init__(self):
+    def __init__(self, drive_manager, template_engine):
         self.logger = logging.getLogger(__name__)
+        self.drive_manager = drive_manager
+        self.template_engine = template_engine
+        self.ai_analyzer = NiftyAIAnalyzer()
+        self.framework_content = {}
     
-    def extract_story_title(self, story_content):
+    def load_framework_content(self):
+        """Load all framework files from Google Drive"""
+        try:
+            self.logger.info(" Loading framework content...")
+            
+            # Load AI queries
+            self.framework_content['character_queries'] = self.drive_manager.read_framework_file('character_queries')
+            self.framework_content['scene_queries'] = self.drive_manager.read_framework_file('scene_queries')
+            self.framework_content['narration_queries'] = self.drive_manager.read_framework_file('narration_queries')
+            self.framework_content['prompt_queries'] = self.drive_manager.read_framework_file('prompt_queries')
+            
+            # Load templates
+            self.framework_content['narration_template'] = self.drive_manager.read_framework_file('narration_template')
+            self.framework_content['character_template'] = self.drive_manager.read_framework_file('character_template')
+            self.framework_content['scene_template'] = self.drive_manager.read_framework_file('scene_template')
+            
+            # Load style guides
+            self.framework_content['visual_rules'] = self.drive_manager.read_framework_file('visual_rules')
+            
+            self.logger.info("✅ All framework content loaded successfully")
+            return True
+            
+        except Exception as e:
+            self.logger.error(f"❌ Failed to load framework content: {e}")
+            raise
+    
+    def process_story(self, story_content: str) -> Dict[str, Any]:
+        """Main story processing pipeline with quality gates"""
+        try:
+            self.logger.info(" Starting story processing pipeline...")
+            
+            # Load framework content
+            self.load_framework_content()
+            
+            # Validate story input
+            self._validate_story_input(story_content)
+            
+            # Extract story title
+            story_title = self._extract_story_title(story_content)
+            self.logger.info(f" Processing story: '{story_title}'")
+            
+            # Process with AI or fallback
+            if self.ai_analyzer.is_available:
+                self.logger.info("烙 Using AI analysis...")
+                results = self._process_with_ai(story_content, story_title)
+            else:
+                self.logger.warning("⚡ AI unavailable, using fallback processing...")
+                results = self._process_with_fallback(story_content, story_title)
+            
+            # Apply quality gates
+            self._apply_quality_gates(results)
+            
+            self.logger.info("✅ Story processing completed successfully")
+            return results
+            
+        except Exception as e:
+            self.logger.error(f"❌ Story processing failed: {e}")
+            raise
+    
+    def _validate_story_input(self, story_content: str):
+        """Validate story input meets requirements"""
+        if not story_content or len(story_content.strip()) < VALIDATION_RULES['min_story_length']:
+            raise ValueError(f"Story too short (min {VALIDATION_RULES['min_story_length']} characters)")
+        
+        if len(story_content) > VALIDATION_RULES['max_story_length']:
+            raise ValueError(f"Story too long (max {VALIDATION_RULES['max_story_length']} characters)")
+    
+    def _extract_story_title(self, story_content: str) -> str:
         """Extract story title from content"""
         lines = story_content.strip().split('\n')
         for line in lines[:5]:
@@ -136,297 +183,102 @@ class OfflineFallbackProcessor:
                 if title and len(title) > 3:
                     return title
         
-        for line in lines:
-            line = line.strip()
-            if line and len(line) > 10:
-                words = line.split()[:5]
-                return ' '.join(words) + " Story"
-        
-        return "My Wonderful Story"
+        # Fallback title
+        return "Magical Story Adventure"
     
-    def analyze_characters(self, story_content):
-        """Basic character analysis"""
-        characters = []
-        
-        # Look for proper nouns as potential character names
-        words = story_content.split()
-        for i, word in enumerate(words):
-            if (word.istitle() and len(word) > 2 and 
-                word not in ['The', 'And', 'But', 'For', 'With'] and
-                i + 1 < len(words) and words[i + 1].istitle()):
-                
-                character_name = word
-                if i + 2 < len(words) and words[i + 2].istitle():
-                    character_name = f"{word} {words[i + 1]} {words[i + 2]}"
-                elif i + 1 < len(words) and words[i + 1].istitle():
-                    character_name = f"{word} {words[i + 1]}"
-                
-                if character_name not in [c['name'] for c in characters]:
-                    characters.append({
-                        'name': character_name,
-                        'role': 'character',
-                        'description': f'A brave character from our story'
-                    })
-        
-        if not characters:
-            characters = [
-                {
-                    'name': 'Adventure Hero',
-                    'role': 'protagonist',
-                    'description': 'The brave main character of our story'
-                },
-                {
-                    'name': 'Magical Friend', 
-                    'role': 'companion',
-                    'description': 'A wonderful friend who helps on the adventure'
-                }
-            ]
-        
-        return characters[:4]
-    
-    def analyze_scenes(self, story_content, characters):
-        """Basic scene analysis"""
-        scenes = []
-        paragraphs = [p.strip() for p in story_content.split('\n\n') if p.strip()]
-        
-        scene_templates = [
-            "The Beginning - Where our adventure starts",
-            "The Journey - Traveling to new places", 
-            "The Discovery - Finding something wonderful",
-            "The Challenge - Overcoming obstacles",
-            "The Celebration - A happy ending"
-        ]
-        
-        for i, paragraph in enumerate(paragraphs[:5]):
-            if paragraph:
-                scenes.append({
-                    'title': scene_templates[i] if i < len(scene_templates) else f"Scene {i+1}",
-                    'description': paragraph[:150] + ('...' if len(paragraph) > 150 else ''),
-                    'location': 'Magical Story World',
-                    'emotion': ['happy', 'excited', 'curious', 'brave', 'joyful'][i % 5]
-                })
-        
-        if not scenes:
-            scenes = [{
-                'title': 'Our Magical Adventure',
-                'description': story_content[:200] + '...',
-                'location': 'Story World',
-                'emotion': 'happy'
-            }]
-        
-        return scenes
-    
-    def generate_narration(self, story_content, characters, scenes):
-        """Generate basic narration"""
-        character_names = ', '.join([char['name'] for char in characters[:2]])
-        
-        narration = f"""Welcome to our wonderful story time! 
-
-Today we're going on a magical adventure with {character_names}.
-
-{story_content[:300]}...
-
-What an amazing journey! I wonder what your favorite part was?
-
-Remember, every story is a new adventure waiting to be discovered!"""
-        
-        return narration
-    
-    def generate_image_prompts(self, scenes, characters):
-        """Generate basic image prompts"""
-        prompts = []
-        
-        for i, scene in enumerate(scenes):
-            prompt = f"""Beautiful children's storybook illustration of {scene['title']}. 
-Magical, colorful, warm lighting, storybook style, child-friendly, 
-detailed, 4K resolution, happy children's story, enchanting atmosphere"""
-            
-            prompts.append({
-                'scene': scene['title'],
-                'prompt': prompt
-            })
-        
-        return prompts
-
-class StoryProcessor:
-    """Processes stories using your NiftyAIAnalyzer with fallback support"""
-    
-    def __init__(self, drive_manager, template_engine):
-        self.logger = logging.getLogger(__name__)
-        self.drive_manager = drive_manager
-        self.template_engine = template_engine
-        self.ai_analyzer = NiftyAIAnalyzer()
-        self.offline_processor = OfflineFallbackProcessor()
-        self.ai_queries = {}
-        self.framework_templates = {}
-        self.style_guides = {}
-    
-    def load_required_files(self, folder_ids):
-        """Load all required input files from Google Drive"""
+    def _process_with_ai(self, story_content: str, story_title: str) -> Dict[str, Any]:
+        """Process story using AI analysis with strict format enforcement"""
         try:
-            self.logger.info("Loading required input files...")
-            
-            # Load AI queries
-            self.ai_queries = {
-                'character': self.drive_manager.read_input_file(
-                    f"ai_queries/character_queries.txt", folder_ids
-                ),
-                'scene': self.drive_manager.read_input_file(
-                    f"ai_queries/scene_queries.txt", folder_ids
-                ),
-                'narration': self.drive_manager.read_input_file(
-                    f"ai_queries/narration_queries.txt", folder_ids
-                ),
-                'prompt': self.drive_manager.read_input_file(
-                    f"ai_queries/prompt_queries.txt", folder_ids
-                )
-            }
-            
-            # Load framework templates
-            self.framework_templates = {
-                'narration': self.drive_manager.read_input_file(
-                    f"framework_templates/narration_template.txt", folder_ids
-                ),
-                'character': self.drive_manager.read_input_file(
-                    f"framework_templates/character_template.txt", folder_ids
-                ),
-                'scene': self.drive_manager.read_input_file(
-                    f"framework_templates/scene_template.txt", folder_ids
-                )
-            }
-            
-            # Load style guides
-            self.style_guides['visual'] = self.drive_manager.read_input_file(
-                f"style_guides/visual_rules.txt", folder_ids
+            # Step 1: Character Analysis
+            self.logger.info(" Analyzing characters...")
+            character_prompt = self.framework_content['character_queries'].format(
+                story_text=story_content
             )
-            
-            # Load story input
-            self.story_content = self.drive_manager.read_input_file(
-                "story_input.txt", folder_ids
-            )
-            
-            # Validate all files were loaded
-            missing_files = []
-            for key, content in self.ai_queries.items():
-                if not content:
-                    missing_files.append(f"ai_queries/{key}_queries.txt")
-            
-            for key, content in self.framework_templates.items():
-                if not content:
-                    missing_files.append(f"framework_templates/{key}_template.txt")
-            
-            if not self.style_guides.get('visual'):
-                missing_files.append("style_guides/visual_rules.txt")
-            
-            if not self.story_content:
-                missing_files.append("story_input.txt")
-            
-            if missing_files:
-                raise ValueError(f"Missing required files: {', '.join(missing_files)}")
-            
-            self.logger.info("✅ All required files loaded successfully")
-            return True
-            
-        except Exception as e:
-            self.logger.error(f"Error loading required files: {e}")
-            raise
-    
-    def process_story(self, folder_ids):
-        """Main method to process story with AI or fallback"""
-        try:
-            self.logger.info("Starting story processing pipeline...")
-            
-            # Load all required files
-            self.load_required_files(folder_ids)
-            
-            # Try AI processing first, then fallback
-            if self.ai_analyzer.is_available:
-                self.logger.info(" Using NiftyAIAnalyzer for processing...")
-                results = self._process_with_ai()
-            else:
-                self.logger.warning(" NiftyAIAnalyzer unavailable, using offline processing...")
-                results = self._process_offline()
-            
-            self.logger.info("✅ Story processing completed")
-            return results
-            
-        except Exception as e:
-            self.logger.error(f"Error in story processing pipeline: {e}")
-            raise
-    
-    def _process_with_ai(self):
-        """Process story using NiftyAIAnalyzer"""
-        try:
-            # Analyze characters
             character_analysis = self.ai_analyzer.analyze_with_retry(
-                self.ai_queries['character'].format(story_text=self.story_content),
-                "You are a character analysis expert. Extract and describe characters from stories accurately."
+                character_prompt,
+                "You are a character analysis expert. Extract characters with strict format compliance."
             )
-            characters = self._parse_character_analysis(character_analysis) if character_analysis else []
+            characters = self._parse_characters(character_analysis) if character_analysis else []
             
-            # Analyze scenes
-            character_list = "\n".join([f"- {char['name']}: {char.get('role', 'unknown')}" for char in characters])
+            # Step 2: Scene Analysis
+            self.logger.info(" Analyzing scenes...")
+            character_summary = self._format_character_summary(characters)
+            scene_prompt = self.framework_content['scene_queries'].format(
+                story_text=story_content,
+                characters=character_summary
+            )
             scene_analysis = self.ai_analyzer.analyze_with_retry(
-                self.ai_queries['scene'].format(story_text=self.story_content, characters=character_list),
-                "You are a story analysis expert. Break down stories into meaningful scenes with emotional arcs."
+                scene_prompt,
+                "You are a story structure expert. Break down stories into meaningful scenes with emotional arcs."
             )
-            scenes = self._parse_scene_analysis(scene_analysis) if scene_analysis else []
+            scenes = self._parse_scenes(scene_analysis) if scene_analysis else []
             
-            # Generate narration
-            character_summary = "\n".join([f"- {char['name']}: {char.get('description', 'No description')}" for char in characters])
-            scene_summary = "\n".join([f"- {scene['title']}: {scene.get('description', 'No description')}" for scene in scenes])
-            
+            # Step 3: Narration Generation
+            self.logger.info(" Generating narration...")
+            scene_summary = self._format_scene_summary(scenes)
+            narration_prompt = self.framework_content['narration_queries'].format(
+                story_text=story_content,
+                characters=character_summary,
+                scenes=scene_summary,
+                visual_style=self.framework_content['visual_rules']
+            )
             narration = self.ai_analyzer.analyze_with_retry(
-                self.ai_queries['narration'].format(
-                    story_text=self.story_content,
-                    characters=character_summary,
-                    scenes=scene_summary,
-                    visual_style=self.style_guides['visual']
-                ),
+                narration_prompt,
                 "You are a professional children's story narrator. Create engaging, age-appropriate narration."
             )
             
-            # Generate image prompts
-            character_descriptions = {char['name']: char.get('description', 'Unknown') for char in characters}
-            image_prompts_text = self.ai_analyzer.analyze_with_retry(
-                self.ai_queries['prompt'].format(
-                    scenes=json.dumps(scenes, indent=2),
-                    characters=json.dumps(character_descriptions, indent=2),
-                    visual_rules=self.style_guides['visual']
-                ),
+            # Step 4: Image Prompts Generation
+            self.logger.info(" Generating image prompts...")
+            prompt_prompt = self.framework_content['prompt_queries'].format(
+                scenes=json.dumps(scenes, indent=2),
+                characters=json.dumps({char['name']: char.get('description', '') for char in characters}, indent=2),
+                visual_rules=self.framework_content['visual_rules']
+            )
+            prompt_analysis = self.ai_analyzer.analyze_with_retry(
+                prompt_prompt,
                 "You are an expert AI image prompt engineer. Create detailed, consistent image prompts."
             )
-            image_prompts = self._parse_image_prompts(image_prompts_text) if image_prompts_text else []
+            image_prompts = self._parse_image_prompts(prompt_analysis, scenes) if prompt_analysis else []
             
             return {
-                'story_title': self.offline_processor.extract_story_title(self.story_content),
-                'original_story': self.story_content,
+                'story_title': story_title,
+                'original_story': story_content,
                 'characters': characters,
                 'scenes': scenes,
-                'narration': narration or "AI narration generation failed.",
+                'narration': narration or "Narration generation failed.",
                 'image_prompts': image_prompts,
                 'processing_stats': {
                     'character_count': len(characters),
                     'scene_count': len(scenes),
-                    'image_prompt_count': len(image_prompts)
-                },
-                'processing_method': 'ai'
+                    'image_prompt_count': len(image_prompts),
+                    'processing_method': 'ai'
+                }
             }
             
         except Exception as e:
-            self.logger.error(f"AI processing failed, falling back to offline: {e}")
-            return self._process_offline()
+            self.logger.error(f"❌ AI processing failed: {e}")
+            # Fall back to basic processing
+            return self._process_with_fallback(story_content, story_title)
     
-    def _process_offline(self):
-        """Process story using offline methods"""
-        characters = self.offline_processor.analyze_characters(self.story_content)
-        scenes = self.offline_processor.analyze_scenes(self.story_content, characters)
-        narration = self.offline_processor.generate_narration(self.story_content, characters, scenes)
-        image_prompts = self.offline_processor.generate_image_prompts(scenes, characters)
+    def _process_with_fallback(self, story_content: str, story_title: str) -> Dict[str, Any]:
+        """Fallback processing when AI is unavailable"""
+        self.logger.info(" Using fallback processing...")
+        
+        # Basic character extraction
+        characters = self._extract_basic_characters(story_content)
+        
+        # Basic scene breakdown
+        scenes = self._create_basic_scenes(story_content, characters)
+        
+        # Basic narration
+        narration = self._create_basic_narration(story_content, characters, scenes)
+        
+        # Basic image prompts
+        image_prompts = self._create_basic_image_prompts(scenes, characters)
         
         return {
-            'story_title': self.offline_processor.extract_story_title(self.story_content),
-            'original_story': self.story_content,
+            'story_title': story_title,
+            'original_story': story_content,
             'characters': characters,
             'scenes': scenes,
             'narration': narration,
@@ -434,100 +286,255 @@ class StoryProcessor:
             'processing_stats': {
                 'character_count': len(characters),
                 'scene_count': len(scenes),
-                'image_prompt_count': len(image_prompts)
-            },
-            'processing_method': 'offline'
+                'image_prompt_count': len(image_prompts),
+                'processing_method': 'fallback'
+            }
         }
     
-    def _parse_character_analysis(self, analysis_text):
-        """Parse character analysis into structured data"""
+    def _parse_characters(self, analysis_text: str) -> List[Dict[str, str]]:
+        """Parse character analysis with strict format enforcement"""
         characters = []
         lines = analysis_text.split('\n')
-        
         current_character = {}
+        
         for line in lines:
             line = line.strip()
             if not line:
-                continue
-                
-            if ':' in line:
-                key, value = line.split(':', 1)
-                key = key.strip().lower()
-                value = value.strip()
-                
-                if key in ['name', 'character']:
-                    if current_character:
+                if current_character:
+                    if self._validate_character(current_character):
                         characters.append(current_character)
-                    current_character = {'name': value}
-                elif current_character:
-                    current_character[key] = value
+                    current_character = {}
+                continue
+            
+            # Parse character fields based on config rules
+            for field, marker in PARSING_RULES['character_format']['field_markers'].items():
+                if line.startswith(marker):
+                    value = line[len(marker):].strip()
+                    current_character[field] = value
+                    break
         
-        if current_character:
+        # Add final character if exists
+        if current_character and self._validate_character(current_character):
             characters.append(current_character)
         
-        if not characters:
-            characters = [{'name': 'Main Character', 'role': 'protagonist', 'description': 'Main story character'}]
+        # Apply character limits
+        characters = characters[:PROCESSING_RULES['character_limits']['max_characters']]
         
+        if len(characters) < PROCESSING_RULES['character_limits']['min_characters']:
+            self.logger.warning(f"⚠️ Character count below minimum, using fallback characters")
+            characters = self._extract_basic_characters(analysis_text)
+        
+        self.logger.info(f"✅ Parsed {len(characters)} characters")
         return characters
     
-    def _parse_scene_analysis(self, analysis_text):
-        """Parse scene analysis into structured data"""
+    def _parse_scenes(self, analysis_text: str) -> List[Dict[str, str]]:
+        """Parse scene analysis with strict format enforcement"""
         scenes = []
         lines = analysis_text.split('\n')
-        
         current_scene = {}
+        
         for line in lines:
             line = line.strip()
             if not line:
-                continue
-                
-            if line.lower().startswith('scene') or line.lower().startswith('part'):
                 if current_scene:
-                    scenes.append(current_scene)
-                current_scene = {'title': line, 'description': ''}
-            elif ':' in line and current_scene:
-                key, value = line.split(':', 1)
-                key = key.strip().lower()
-                value = value.strip()
-                
-                if key in ['location', 'emotion', 'characters', 'action']:
-                    current_scene[key] = value
-                else:
-                    current_scene['description'] += line + ' '
-            elif current_scene:
-                current_scene['description'] += line + ' '
+                    if self._validate_scene(current_scene):
+                        scenes.append(current_scene)
+                    current_scene = {}
+                continue
+            
+            # Parse scene fields based on config rules
+            for field, marker in PARSING_RULES['scene_format']['field_markers'].items():
+                if line.startswith(marker):
+                    value = line[len(marker):].strip()
+                    current_scene[field] = value
+                    break
         
-        if current_scene:
+        # Add final scene if exists
+        if current_scene and self._validate_scene(current_scene):
             scenes.append(current_scene)
         
-        if not scenes:
-            scenes = [{'title': 'Story Scene', 'description': 'Main story sequence', 'location': 'unknown', 'emotion': 'neutral'}]
+        # Apply scene limits
+        scenes = scenes[:PROCESSING_RULES['scene_limits']['max_scenes']]
         
+        if len(scenes) < PROCESSING_RULES['scene_limits']['min_scenes']:
+            self.logger.warning(f"⚠️ Scene count below minimum, using fallback scenes")
+            scenes = self._create_basic_scenes(analysis_text, [])
+        
+        self.logger.info(f"✅ Parsed {len(scenes)} scenes")
         return scenes
     
-    def _parse_image_prompts(self, prompts_text):
-        """Parse image prompts into structured data"""
+    def _parse_image_prompts(self, analysis_text: str, scenes: List[Dict]) -> List[Dict[str, str]]:
+        """Parse image prompts with strict format enforcement"""
         prompts = []
-        lines = prompts_text.split('\n')
-        
+        lines = analysis_text.split('\n')
         current_prompt = {}
+        
         for line in lines:
             line = line.strip()
-            if not line:
-                continue
-                
-            if line.lower().startswith('scene') or line.lower().startswith('prompt'):
+            if line.startswith('Prompt for'):
                 if current_prompt:
                     prompts.append(current_prompt)
-                current_prompt = {'scene': line, 'prompt': ''}
-            elif current_prompt:
+                scene_title = line.replace('Prompt for', '').replace(':', '').strip()
+                current_prompt = {'scene': scene_title, 'prompt': ''}
+            elif current_prompt and line:
                 current_prompt['prompt'] += line + ' '
         
         if current_prompt:
             prompts.append(current_prompt)
         
+        # Ensure one prompt per scene
+        if len(prompts) < len(scenes):
+            for i, scene in enumerate(scenes):
+                if i >= len(prompts):
+                    prompts.append({
+                        'scene': scene.get('title', f'Scene {i+1}'),
+                        'prompt': f"Children's storybook illustration of {scene.get('title', 'story scene')}, magical, colorful, warm lighting, storybook style"
+                    })
+        
+        self.logger.info(f"✅ Generated {len(prompts)} image prompts")
         return prompts
+    
+    def _validate_character(self, character: Dict) -> bool:
+        """Validate character has required fields"""
+        required_fields = PROCESSING_RULES['character_limits']['required_fields']
+        missing_fields = [field for field in required_fields if not character.get(field)]
+        
+        if missing_fields:
+            self.logger.warning(f"⚠️ Character missing fields: {missing_fields}")
+            return len(missing_fields) <= 2  # Allow some missing fields
+        
+        return True
+    
+    def _validate_scene(self, scene: Dict) -> bool:
+        """Validate scene has required fields"""
+        required_fields = PROCESSING_RULES['scene_limits']['required_fields']
+        missing_fields = [field for field in required_fields if not scene.get(field)]
+        
+        if missing_fields:
+            self.logger.warning(f"⚠️ Scene missing fields: {missing_fields}")
+            return len(missing_fields) <= 2  # Allow some missing fields
+        
+        return True
+    
+    def _apply_quality_gates(self, results: Dict[str, Any]):
+        """Apply quality gates to processing results"""
+        # Character count validation
+        char_count = len(results['characters'])
+        if not (PROCESSING_RULES['character_limits']['min_characters'] <= char_count <= PROCESSING_RULES['character_limits']['max_characters']):
+            self.logger.warning(f"⚠️ Character count {char_count} outside expected range")
+        
+        # Scene count validation
+        scene_count = len(results['scenes'])
+        if not (PROCESSING_RULES['scene_limits']['min_scenes'] <= scene_count <= PROCESSING_RULES['scene_limits']['max_scenes']):
+            self.logger.warning(f"⚠️ Scene count {scene_count} outside expected range")
+        
+        # Narration length validation
+        narration_words = len(results['narration'].split())
+        if not (PROCESSING_RULES['narration_limits']['min_words'] <= narration_words <= PROCESSING_RULES['narration_limits']['max_words']):
+            self.logger.warning(f"⚠️ Narration word count {narration_words} outside expected range")
+    
+    # Fallback methods for basic processing
+    def _extract_basic_characters(self, story_content: str) -> List[Dict[str, str]]:
+        """Extract basic characters from story content"""
+        characters = [
+            {
+                'name': 'Adventure Hero',
+                'role': 'protagonist',
+                'personality': 'brave, curious, kind',
+                'appearance': 'young adventurer with bright eyes and friendly smile',
+                'motivation': 'to explore and discover new things',
+                'emotional_traits': 'excited, courageous, hopeful',
+                'description': 'The main character who goes on a wonderful adventure.'
+            },
+            {
+                'name': 'Magical Friend',
+                'role': 'supporting',
+                'personality': 'helpful, magical, wise',
+                'appearance': 'sparkling magical creature with gentle features',
+                'motivation': 'to help and guide the hero',
+                'emotional_traits': 'caring, patient, encouraging',
+                'description': 'A magical friend who helps on the adventure.'
+            }
+        ]
+        return characters[:PROCESSING_RULES['character_limits']['max_characters']]
+    
+    def _create_basic_scenes(self, story_content: str, characters: List[Dict]) -> List[Dict[str, str]]:
+        """Create basic scene breakdown"""
+        character_names = ', '.join([char['name'] for char in characters[:2]])
+        
+        scenes = [
+            {
+                'title': 'The Beginning Adventure',
+                'location': 'Magical Story World',
+                'emotion': 'excited',
+                'characters': character_names,
+                'action': 'Starting the wonderful journey',
+                'description': 'Where our adventure begins with excitement and curiosity.'
+            },
+            {
+                'title': 'Discovering New Places',
+                'location': 'Enchanted Forest',
+                'emotion': 'curious',
+                'characters': character_names,
+                'action': 'Exploring magical surroundings',
+                'description': 'Discovering amazing new places and making wonderful finds.'
+            },
+            {
+                'title': 'Facing Challenges',
+                'location': 'Mysterious Path',
+                'emotion': 'brave',
+                'characters': character_names,
+                'action': 'Overcoming obstacles together',
+                'description': 'Working together to solve problems and face challenges.'
+            },
+            {
+                'title': 'Happy Celebration',
+                'location': 'Beautiful Meadow',
+                'emotion': 'joyful',
+                'characters': character_names,
+                'action': 'Celebrating success',
+                'description': 'A wonderful celebration of friendship and accomplishment.'
+            }
+        ]
+        return scenes[:PROCESSING_RULES['scene_limits']['max_scenes']]
+    
+    def _create_basic_narration(self, story_content: str, characters: List[Dict], scenes: List[Dict]) -> str:
+        """Create basic narration"""
+        character_names = ', '.join([char['name'] for char in characters[:2]])
+        
+        return f"""
+Welcome to our magical story time! Today we're going on an amazing adventure with {character_names}.
 
-# Factory function
+{story_content[:200]}...
+
+What an incredible journey! Can you guess what wonderful things we discovered along the way?
+
+Remember, every story is a new adventure waiting to be explored. What was your favorite part?
+
+Let's imagine we're there right now - can you see the magical colors and hear the wonderful sounds?
+
+And they all lived happily ever after, exploring new adventures every day!
+"""
+    
+    def _create_basic_image_prompts(self, scenes: List[Dict], characters: List[Dict]) -> List[Dict[str, str]]:
+        """Create basic image prompts"""
+        prompts = []
+        for scene in scenes:
+            prompts.append({
+                'scene': scene['title'],
+                'prompt': f"Children's storybook illustration of {scene['title']}, {scene['description']}, magical storybook style, warm lighting, soft pastel colors, detailed environments, 16:9 aspect ratio, child-friendly"
+            })
+        return prompts
+    
+    def _format_character_summary(self, characters: List[Dict]) -> str:
+        """Format character summary for AI prompts"""
+        return "\n".join([f"- {char['name']}: {char.get('role', 'character')}" for char in characters])
+    
+    def _format_scene_summary(self, scenes: List[Dict]) -> str:
+        """Format scene summary for AI prompts"""
+        return "\n".join([f"- {scene['title']}: {scene.get('emotion', 'neutral')} at {scene.get('location', 'unknown')}" for scene in scenes])
+
+
 def create_story_processor(drive_manager, template_engine):
+    """Create and return a StoryProcessor instance"""
     return StoryProcessor(drive_manager, template_engine)

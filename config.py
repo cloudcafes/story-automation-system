@@ -1,199 +1,252 @@
 """
-Google Drive Story Automation - Configuration File
-SSL Verification Disabled
+Story Automation System - Centralized Configuration
+Everything configurable in one place - No code modifications needed for changes
 """
 
 import os
 from datetime import datetime
 
 # =============================================================================
-# SSL CONFIGURATION - DISABLED FOR CORPORATE NETWORKS
-# =============================================================================
-
-# Disable SSL verification completely
-SSL_VERIFY = False
-DEEPSEEK_VERIFY_SSL = False
-
-# Disable SSL warnings
-import urllib3
-urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
-
-# =============================================================================
-# DEEPSEEK API CONFIGURATION
-# =============================================================================
-
-DEEPSEEK_API_KEY = os.getenv('DEEPSEEK_API_KEY', 'sk-df60b28326444de6859976f6e603fd9c')
-DEEPSEEK_BASE_URL = "https://api.deepseek.com"
-DEEPSEEK_MODEL = "deepseek-chat"
-DEEPSEEK_MAX_TOKENS = 4000
-DEEPSEEK_TEMPERATURE = 0.7
-
-# =============================================================================
 # GOOGLE DRIVE CONFIGURATION
 # =============================================================================
-
 GOOGLE_DRIVE_ROOT_FOLDER_ID = "1vWhSS20YjkFNitEZI14c8C1uEt12puLE"
-INPUT_FOLDER_NAME = "(in)"
-OUTPUT_FOLDER_NAME = "(out)"
 
-# Subfolder names within input directory
-AI_QUERIES_FOLDER = "ai_queries"
-FRAMEWORK_TEMPLATES_FOLDER = "framework_templates"
-STYLE_GUIDES_FOLDER = "style_guides"
+# Folder Structure in Google Drive
+DRIVE_FOLDER_STRUCTURE = {
+    'framework_root': 'Framework',
+    'ai_queries_folder': 'Framework/ai_queries',
+    'framework_templates_folder': 'Framework/framework_templates', 
+    'style_guides_folder': 'Framework/style_guides',
+    'input_folder': '',  # Root level
+    'output_folder': ''   # Root level for generated folders
+}
 
-# =============================================================================
-# FILE NAMES CONFIGURATION
-# =============================================================================
+# Framework Files - All 8 required files with exact paths
+FRAMEWORK_FILES = {
+    # AI Query Files
+    'character_queries': 'Framework/ai_queries/character_queries.txt',
+    'scene_queries': 'Framework/ai_queries/scene_queries.txt',
+    'narration_queries': 'Framework/ai_queries/narration_queries.txt',
+    'prompt_queries': 'Framework/ai_queries/prompt_queries.txt',
+    
+    # Framework Template Files
+    'narration_template': 'Framework/framework_templates/narration_template.txt',
+    'character_template': 'Framework/framework_templates/character_template.txt', 
+    'scene_template': 'Framework/framework_templates/scene_template.txt',
+    
+    # Style Guide Files
+    'visual_rules': 'Framework/style_guides/visual_rules.txt'
+}
 
-# Input file names
-STORY_INPUT_FILE = "story_input.txt"
-
-# AI query file names
-CHARACTER_QUERIES_FILE = "character_queries.txt"
-SCENE_QUERIES_FILE = "scene_queries.txt"
-NARRATION_QUERIES_FILE = "narration_queries.txt"
-PROMPT_QUERIES_FILE = "prompt_queries.txt"
-
-# Template file names
-NARRATION_TEMPLATE_FILE = "narration_template.txt"
-CHARACTER_TEMPLATE_FILE = "character_template.txt"
-SCENE_TEMPLATE_FILE = "scene_template.txt"
-
-# Style guide file names
-VISUAL_RULES_FILE = "visual_rules.txt"
-
-# Output file names
-OUTPUT_STORY_FILE = "1-Story.txt"
-OUTPUT_NARRATION_FILE = "2-Narration.txt"
-OUTPUT_CHARACTER_SHEET_FILE = "3-Character-Sheet.txt"
-OUTPUT_SCENES_FILE = "4-Scenes.txt"
-OUTPUT_IMAGE_PROMPTS_FILE = "5-Image-Prompts.txt"
-OUTPUT_PROCESSING_REPORT_FILE = "processing-report.txt"
-
-# =============================================================================
-# PROCESSING SETTINGS
-# =============================================================================
-
-MAX_RETRIES = 3
-RETRY_DELAY = 2
-API_TIMEOUT = 30.0
-MINIMUM_QUALITY_SCORE = 0.7
-MAXIMUM_ERROR_COUNT = 5
+# Input/Output Files
+INPUT_OUTPUT_FILES = {
+    'story_input': 'story_input.txt',  # At root level
+    
+    # Generated Output Files (in timestamped folders)
+    'output_story': '1-Story.txt',
+    'output_narration': '2-Narration.txt', 
+    'output_character_sheet': '3-Character-Sheet.txt',
+    'output_scenes': '4-Scenes.txt',
+    'output_image_prompts': '5-Image-Prompts.txt',
+    'output_processing_report': 'processing-report.txt'
+}
 
 # =============================================================================
-# OUTPUT GENERATION SETTINGS
+# AI PROCESSING RULES - ENFORCED LIMITS
 # =============================================================================
+PROCESSING_RULES = {
+    'character_limits': {
+        'min_characters': 2,
+        'max_characters': 6,
+        'required_fields': ['name', 'role', 'personality', 'appearance', 'motivation', 'emotional_traits', 'description']
+    },
+    
+    'scene_limits': {
+        'min_scenes': 4,
+        'max_scenes': 8,
+        'required_fields': ['title', 'location', 'emotion', 'characters', 'action', 'description']
+    },
+    
+    'narration_limits': {
+        'min_words': 900,
+        'max_words': 1200,
+        'target_age': '4-6 years',
+        'duration_minutes': '8-10',
+        'required_elements': ['audience_questions', 'sensory_descriptions', 'emotional_shifts', 'positive_ending']
+    },
+    
+    'prompt_limits': {
+        'prompts_per_scene': 1,
+        'required_elements': ['art_style', 'lighting', 'colors', 'character_consistency', 'aspect_ratio']
+    }
+}
 
+# =============================================================================
+# AI CONFIGURATION - DeepSeek API
+# =============================================================================
+AI_CONFIG = {
+    'api_key': os.getenv('DEEPSEEK_API_KEY', 'sk-df60b28326444de6859976f6e603fd9c'),
+    'base_url': 'https://api.deepseek.com',
+    'model': 'deepseek-chat',
+    'max_tokens': 4000,
+    'temperature': 0.7,
+    'timeout': 30.0,
+    
+    # SSL Configuration - Keep disabled as requested
+    'verify_ssl': False
+}
+
+# =============================================================================
+# PARSING RULES - STRICT FORMAT ENFORCEMENT
+# =============================================================================
+PARSING_RULES = {
+    'character_format': {
+        'start_marker': 'Character:',
+        'field_markers': {
+            'name': 'Character:',
+            'role': 'Role:',
+            'personality': 'Personality:',
+            'appearance': 'Appearance:', 
+            'motivation': 'Motivation:',
+            'emotional_traits': 'Emotional Traits:',
+            'description': 'Description:'
+        },
+        'separator': '\n\n'  # Empty line between characters
+    },
+    
+    'scene_format': {
+        'start_marker': 'Scene:',
+        'field_markers': {
+            'title': 'Scene:',
+            'location': 'Location:',
+            'emotion': 'Emotion:',
+            'characters': 'Characters:',
+            'action': 'Action:', 
+            'description': 'Description:'
+        },
+        'separator': '\n\n'  # Empty line between scenes
+    },
+    
+    'prompt_format': {
+        'start_marker': 'Prompt for',
+        'field_markers': {
+            'scene_title': 'Prompt for',
+            'prompt_text': 'Children\'s storybook illustration'
+        }
+    }
+}
+
+# =============================================================================
+# TEMPLATE VARIABLE MAPPING
+# =============================================================================
+TEMPLATE_VARIABLES = {
+    'character_queries': ['story_text'],
+    'scene_queries': ['story_text', 'characters'],
+    'narration_queries': ['story_text', 'characters', 'scenes', 'visual_style'],
+    'prompt_queries': ['scenes', 'characters', 'visual_rules'],
+    
+    'narration_template': ['story_title', 'character_list', 'scene_list', 'narration_content'],
+    'character_template': ['story_title', 'character_count', 'character_sections'],
+    'scene_template': ['story_title', 'scene_count', 'scene_sections']
+}
+
+# =============================================================================
+# OUTPUT CONFIGURATION
+# =============================================================================
 def generate_output_folder_name(story_title="story"):
-    """Generate a unique folder name for output"""
+    """Generate unique output folder name - Configurable format"""
     sanitized_title = "".join(c for c in story_title if c.isalnum() or c in (' ', '-', '_')).strip()
-    sanitized_title = sanitized_title.replace(' ', '-').lower()
+    sanitized_title = sanitized_title.replace(' ', '-').lower()[:30]  # Limit length
     timestamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    return f"{sanitized_title}-{timestamp}"
-
-def get_input_folder_path():
-    """Get the full path for input folder"""
-    return f"{INPUT_FOLDER_NAME}"
-
-def get_output_folder_path(story_title="story"):
-    """Get the full path for output folder"""
-    folder_name = generate_output_folder_name(story_title)
-    return f"{OUTPUT_FOLDER_NAME}/{folder_name}"
-
-def get_ai_queries_folder_path():
-    """Get the full path for AI queries folder"""
-    return f"{INPUT_FOLDER_NAME}/{AI_QUERIES_FOLDER}"
-
-def get_framework_templates_folder_path():
-    """Get the full path for framework templates folder"""
-    return f"{INPUT_FOLDER_NAME}/{FRAMEWORK_TEMPLATES_FOLDER}"
-
-def get_style_guides_folder_path():
-    """Get the full path for style guides folder"""
-    return f"{INPUT_FOLDER_NAME}/{STYLE_GUIDES_FOLDER}"
+    return f"{sanitized_title}_{timestamp}"
 
 # =============================================================================
-# VALIDATION SETTINGS
+# VALIDATION CONFIGURATION
 # =============================================================================
+VALIDATION_RULES = {
+    'required_framework_files': list(FRAMEWORK_FILES.keys()),
+    'min_story_length': 100,  # characters
+    'max_story_length': 10000, # characters
+    'quality_thresholds': {
+        'character_completeness': 0.8,  # 80% of required fields filled
+        'scene_coherence': 0.7,
+        'narration_quality': 0.8
+    }
+}
 
-REQUIRED_INPUT_FILES = [
-    STORY_INPUT_FILE,
-    f"{AI_QUERIES_FOLDER}/{CHARACTER_QUERIES_FILE}",
-    f"{AI_QUERIES_FOLDER}/{SCENE_QUERIES_FILE}",
-    f"{AI_QUERIES_FOLDER}/{NARRATION_QUERIES_FILE}",
-    f"{AI_QUERIES_FOLDER}/{PROMPT_QUERIES_FILE}",
-    f"{FRAMEWORK_TEMPLATES_FOLDER}/{NARRATION_TEMPLATE_FILE}",
-    f"{FRAMEWORK_TEMPLATES_FOLDER}/{CHARACTER_TEMPLATE_FILE}",
-    f"{FRAMEWORK_TEMPLATES_FOLDER}/{SCENE_TEMPLATE_FILE}",
-    f"{STYLE_GUIDES_FOLDER}/{VISUAL_RULES_FILE}"
-]
+# =============================================================================
+# ERROR HANDLING & MESSAGES
+# =============================================================================
+ERROR_MESSAGES = {
+    'missing_credentials': "Google Drive credentials file not found.",
+    'drive_connection_failed': "Failed to connect to Google Drive.",
+    'missing_framework_file': "Required framework file not found: {file_path}",
+    'ai_api_error': "DeepSeek API error: {error}",
+    'processing_failed': "Story processing failed: {error}",
+    'validation_failed': "Validation failed: {rule} - {details}"
+}
 
-EXPECTED_OUTPUT_FILES = [
-    OUTPUT_STORY_FILE,
-    OUTPUT_NARRATION_FILE,
-    OUTPUT_CHARACTER_SHEET_FILE,
-    OUTPUT_SCENES_FILE,
-    OUTPUT_IMAGE_PROMPTS_FILE,
-    OUTPUT_PROCESSING_REPORT_FILE
-]
+SUCCESS_MESSAGES = {
+    'drive_connected': "✅ Connected to Google Drive successfully",
+    'framework_loaded': "✅ All framework files loaded",
+    'story_processed': "✅ Story processed successfully: {story_title}",
+    'files_generated': "✅ Generated {file_count} output files"
+}
+
+# =============================================================================
+# SYSTEM SETTINGS
+# =============================================================================
+SYSTEM_SETTINGS = {
+    'max_retries': 3,
+    'retry_delay': 2,
+    'log_level': 'INFO',
+    'timeout': 30.0
+}
 
 # =============================================================================
 # GOOGLE DRIVE API SETTINGS
 # =============================================================================
-
 GOOGLE_DRIVE_SCOPES = [
     'https://www.googleapis.com/auth/drive.file',
     'https://www.googleapis.com/auth/drive.appdata'
 ]
 
+# Local credentials file path (only local file needed)
 CREDENTIALS_FILE_PATH = os.path.join(os.path.dirname(__file__), 'credentials.json')
+
+# MIME Types
 MIME_TYPE_FOLDER = 'application/vnd.google-apps.folder'
 MIME_TYPE_TEXT = 'text/plain'
 
 # =============================================================================
-# LOGGING CONFIGURATION
+# CONFIGURATION VALIDATION
 # =============================================================================
-
-LOG_LEVEL = "INFO"
-LOG_FORMAT = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-
-# =============================================================================
-# ERROR MESSAGES
-# =============================================================================
-
-ERROR_MESSAGES = {
-    'missing_credentials': "Credentials file not found.",
-    'drive_api_error': "Google Drive API error: {error}",
-    'missing_input_file': "Required input file not found: {file_path}",
-    'ai_api_error': "DeepSeek API error: {error}",
-    'processing_error': "Processing error: {error}"
-}
-
-SUCCESS_MESSAGES = {
-    'drive_connected': "Connected to Google Drive",
-    'folders_created': "Directory structure created",
-    'story_processed': "Story processed: {story_title}",
-    'files_generated': "Generated {file_count} files"
-}
-
-# =============================================================================
-# VALIDATION
-# =============================================================================
-
-def validate_config():
-    """Validate that all required configuration is present"""
+def validate_configuration():
+    """Validate that all required configuration is present and valid"""
+    errors = []
+    
+    # Check credentials file exists
     if not os.path.exists(CREDENTIALS_FILE_PATH):
-        return False, ERROR_MESSAGES['missing_credentials']
+        errors.append(ERROR_MESSAGES['missing_credentials'])
     
-    if not DEEPSEEK_API_KEY:
-        return False, "DEEPSEEK_API_KEY not set."
+    # Check AI API key
+    if not AI_CONFIG['api_key']:
+        errors.append("DEEPSEEK_API_KEY not configured")
+    elif AI_CONFIG['api_key'] == 'sk-df60b28326444de6859976f6e603fd9c':
+        print("⚠️  Using default DeepSeek API key - replace with your actual key for production")
     
-    if not GOOGLE_DRIVE_ROOT_FOLDER_ID:
-        return False, "GOOGLE_DRIVE_ROOT_FOLDER_ID not configured."
+    # Check processing rules are valid
+    if PROCESSING_RULES['character_limits']['min_characters'] > PROCESSING_RULES['character_limits']['max_characters']:
+        errors.append("Character limits are invalid (min > max)")
     
-    return True, "Configuration valid"
+    if PROCESSING_RULES['scene_limits']['min_scenes'] > PROCESSING_RULES['scene_limits']['max_scenes']:
+        errors.append("Scene limits are invalid (min > max)")
+    
+    return len(errors) == 0, errors
 
-# Run configuration validation
-config_valid, config_error = validate_config()
+# Validate on import
+config_valid, config_errors = validate_configuration()
 if not config_valid:
-    print(f"⚠️ Configuration Warning: {config_error}")
+    print("⚠️ Configuration Warnings:")
+    for error in config_errors:
+        print(f"   - {error}")

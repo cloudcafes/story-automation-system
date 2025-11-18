@@ -13,7 +13,7 @@ DEFAULT_EXTENSIONS = ["*.py","*.txt"]
 OUTPUT_FILENAME_PREFIX = "complete_code"
 ENCODING = "utf-8"
 DELIMITER = "=" * 80
-RECURSIVE_SEARCH = False
+RECURSIVE_SEARCH = True
 
 def normalize_path(path):
     if platform.system() == "Windows":

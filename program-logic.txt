@@ -1,0 +1,255 @@
+CORE PURPOSE & BUSINESS LOGIC
+
+Primary Objective:
+Transform raw story text into complete YouTube video production packages through AI analysis, maintaining strict quality control and consistent branding.
+
+Business Logic Flow:
+1. Input: User places story in `story_input.txt` at Google Drive root
+2. Processing: AI analyzes story structure, extracts elements, enforces rules
+3. Output: Generates 6 coordinated files for video production
+4. Delivery: All files stored in timestamped Google Drive folders
+5. Usage: User creates videos using narration + AI-generated images from prompts
+
+Why This Architecture:
+- Cloud-First: No local file dependencies except credentials
+- Quality Enforcement: Strict rules prevent AI randomness
+- Production Ready: Outputs are immediately usable for video creation
+- Audience Specific: Tailored for 4-6 year old attention spans and comprehension
+
+GOOGLE DRIVE STRUCTURE:
+
+Root: https://drive.google.com/drive/folders/1vWhSS20YjkFNitEZI14c8C1uEt12puLE
+¦
++-- Framework/ (Manual setup once)
+¦   +-- ai_queries/
+¦   ¦   +-- character_queries.txt
+¦   ¦   +-- scene_queries.txt
+¦   ¦   +-- narration_queries.txt
+¦   ¦   +-- prompt_queries.txt
+¦   +-- framework_templates/
+¦   ¦   +-- narration_template.txt
+¦   ¦   +-- character_template.txt
+¦   ¦   +-- scene_template.txt
+¦   +-- style_guides/
+¦       +-- visual_rules.txt
+¦
++-- story_input.txt (User-provided story)
+¦
++-- Generated folders (name_timestamp)/
+    +-- 1-Story.txt
+    +-- 2-Narration.txt
+    +-- 3-Character-Sheet.txt
+    +-- 4-Scenes.txt
+    +-- 5-Image-Prompts.txt
+    +-- processing-report.txt
+
+Python Program File Structure:    
+
+story-automation-system/
++-- config.py              # Centralized configuration
++-- gdrive_manager.py      # Google Drive operations
++-- story_processor.py     # AI analysis & processing
++-- template_engine.py     # Output formatting
++-- main.py               # Main orchestrator
++-- credentials.json      # Google service account    
+
+TECHNICAL SPECIFICATIONS
+AI Integration:
+Provider: DeepSeek API
+Model: deepseek-chat
+SSL: Disabled for API calls
+Retry Logic: Exponential backoff (3 attempts)
+
+MINUTE TECHNICAL LOGIC
+config.py - Central Nervous System
+Purpose: Single source of truth for all modifiable parameters without code changes
+Key Logic Sections:
+1. Drive Path Resolution: Maps logical file keys to exact Google Drive paths
+2. AI Configuration Management: Handles API keys, models, timeouts, SSL settings
+3. Processing Rule Enforcement: Hard-coded limits (2-6 chars, 4-8 scenes, etc.)
+4. Template Variable Mapping: Ensures placeholder consistency across system
+5. Validation Gatekeeping: Pre-start checks for credentials, API keys, rule sanity
+
+Critical Business Rules:
+Character extraction must yield 2-6 characters with 7 required fields
+Scene breakdown must create 4-8 scenes with emotional progression
+Narration must be 900-1200 words for 8-10 minute runtime
+Each scene gets exactly 1 image prompt with consistent styling
+
+
+gdrive_manager.py - Cloud File System
+Purpose: Abstraction layer between Python logic and Google Drive storage
+Core Logic Flow:
+1. Service Initialization: 
+- Load service account credentials
+- Build Drive API client with disabled SSL verification
+- Test connection by listing root folder contents
+2. Folder Navigation Logic:
+- Recursive folder creation/validation
+- Path parsing: `"Framework/ai_queries/character_queries.txt"` ? folder IDs
+- Cache folder IDs to avoid repeated API calls
+3. File Operations:
+- Read: Download framework files ? memory ? string processing
+- Write: Create temp files ? upload to Drive ? cleanup temps
+- Validation: Check all 8 framework files exist and are readable
+4. Output Management:
+- Generate unique folder names: `story-title_YYYYMMDD-HHMMSS`
+- Create folder in Drive root
+- Write 6 output files atomically
+
+Error Handling Logic:
+- Retry with exponential backoff on API failures
+- Graceful degradation if some files can't be written
+- Comprehensive logging of all Drive operations
+
+story_processor.py - AI Intelligence Core
+Purpose: Transform story text into structured content using AI analysis
+
+Processing Pipeline Logic:
+1. Character Extraction Phase:
+- Load `character_queries.txt` template
+- Inject story text: `{story_text}` placeholder
+- Send to DeepSeek with strict formatting instructions
+- Parse Response: Look for `Character: [Name]` pattern, extract 7 fields
+- Validate: Ensure 2-6 characters, all required fields present
+- Fallback: If parsing fails, generate 2 default characters
+2. Scene Analysis Phase:
+- Load `scene_queries.txt` template
+- Inject story + character summary: `{story_text}` + `{characters}`
+- Send to DeepSeek for scene breakdown
+- Parse Response: Look for `Scene: [Title]` pattern, extract 6 fields
+- Validate: Ensure 4-8 scenes, emotional progression (intro?development?challenge?resolution)
+- Fallback: If parsing fails, create 4 basic scenes
+3. Narration Generation Phase:
+- Load `narration_queries.txt` template
+- Inject all context: `{story_text}` + `{characters}` + `{scenes}` + `{visual_style}`
+- Send to DeepSeek for child-friendly narration
+- Validate: 900-1200 words, includes audience questions, sensory descriptions
+- No Parsing: Raw narration text used directly
+4. Image Prompt Creation Phase:
+- Load `prompt_queries.txt` template
+- Inject structured data: JSON-formatted scenes + characters + visual rules
+- Send to DeepSeek for prompt engineering
+- Parse Response: Look for `Prompt for [Scene Title]` pattern
+- Validate: One prompt per scene, consistent character descriptions
+- Fallback: Basic prompts if parsing fails
+
+AI Client Logic:
+- Initialize with SSL disabled as requested
+- Exponential retry on API failures (500, 502, 503, 504 status codes)
+- System prompts enforce strict output formatting
+- Temperature 0.7 for creative but consistent results
+
+template_engine.py - Output Formatter
+Purpose: Apply consistent branding and structure to AI-generated content
+
+File Generation Logic:
+1. 1-Story.txt:
+- Original content + metadata header
+- Word count and character count analytics
+- Timestamp and title separation with `======` banners
+2. 2-Narration.txt:
+- Structured with character and scene references
+- Production notes section with timing guidelines
+- Audience interaction markers and pacing suggestions
+3. 3-Character-Sheet.txt:
+- Individual character blocks with consistent formatting
+- Field validation and completeness indicators
+- Visual consistency enforcement notes
+4. 4-Scenes.txt:
+- Scene-by-scene breakdown with inferred visual elements
+- Emotion-based lighting/color/composition recommendations
+- Transition flow and pacing analysis
+5. 5-Image-Prompts.txt:
+- Technically detailed prompts for AI image generators
+- Scene context and emotional tone integration
+- Style consistency enforcement across all prompts
+- Generation tips and aspect ratio specifications
+6. processing-report.txt:
+- Comprehensive quality assurance summary
+- Processing statistics and validation results
+- Next steps for video production workflow
+
+Visual Inference Logic:
+- Emotion ? Color mapping: happy = warm yellows, curious = soft blues
+- Action ? Composition: movement = diagonal lines, discovery = centered focus
+- Tone ? Lighting: magical = ethereal glow, brave = dramatic highlights
+
+main.py - Orchestration Brain
+Purpose: Coordinate all components with error handling and user feedback
+
+Execution Logic Flow:
+1. Initialization Sequence:
+- Validate config ? Initialize Drive manager ? Check framework files ? Setup processors
+- Any failure here stops entire process with clear error messages
+2. Input Validation:
+- Check `story_input.txt` exists and has 100+ characters
+- Provide specific guidance if validation fails
+3. Processing Pipeline:
+- Step-by-step progress reporting with timing
+- Continue on partial failures where possible
+- Fallback to basic processing if AI unavailable
+4. Output Management:
+- Create unique output folder for each story processing
+- Atomic file writing with individual success/failure tracking
+- Comprehensive summary report generation
+5. User Communication:
+- Clear console output with progress indicators
+- Detailed success/failure reports
+- Next steps guidance for video production
+
+CRITICAL BUSINESS RULES ENFORCEMENT
+ Quality Gates:
+- Pre-processing: Story length 100-10,000 characters
+- Character Analysis: Exactly 7 fields per character, 2-6 total characters
+- Scene Breakdown: Emotional arc completeness, 4-8 scenes
+- Narration: Age-appropriate language, 900-1200 words, audience engagement
+- Visual Consistency: Character appearance maintenance across all prompts
+ Error Recovery Strategies:
+- AI Unavailable: Fallback to template-based content generation
+- Parsing Failed: Basic extraction with default values
+- Drive Errors: Retry logic with progressive backoff
+- Validation Failed: Continue with warnings vs hard stop decisions
+ Cross-Platform Considerations:
+- Paths: All Google Drive paths, no local file system dependencies
+- SSL: Disabled for DeepSeek API as specifically requested
+- Encoding: UTF-8 enforced for all text operations
+- Temporary Files: Secure creation and deletion for upload operations
+
+COMPONENT INTERDEPENDENCIES
+main.py (orchestrator)
+?
+config.py (configuration)
+?
+gdrive_manager.py (file I/O)
+?
+story_processor.py (AI analysis)
+?
+template_engine.py (formatting)
+?
+Google Drive (storage)
+
+
+DATA FLOW TRANSFORMATIONS
+Raw Story Text
+? AI Analysis
+Structured Characters + Scenes
+? Template Application
+Formatted Production Files
+? Quality Validation
+YouTube-Ready Assets
+
+Required Setup:
+Google Service Account with Drive API access
+DeepSeek API key for AI analysis
+Framework files pre-created in Google Drive
+credentials.json in local directory
+
+SUCCESS METRICS
+1. Functional: Generates all 6 output files for any valid story input
+2. Quality: Outputs meet all processing rules and quality gates
+3. Reliability: Handles errors gracefully with informative feedback
+4. Usability: Production team can immediately use outputs for video creation
+5. Maintainability: All configuration centralized, no code changes for adjustments
+
+BUILD INSTRUCTION: Implement this exact logical flow with the specified minute details, ensuring each component enforces the business rules and quality gates while maintaining the cloud-first, AI-powered architecture for children's educational content production. Create each Python file according to the architecture, ensuring all components integrate seamlessly and enforce the specified processing rules. The system should be production-ready for automated story processing.
